@@ -11,4 +11,7 @@
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
 
     <string name="mapbox_access_token">pk.eyJ1IjoiaG9uZXlmb3giLCJhIjoiY2tjdGUwOW53MWpsbTJydDYybGdxM2lzZiJ9.dAWea2z1UTY5WUheXV9Jng</string>
+    <string name="tab_map">Map</string>
+    <string name="tab_tracks">Tracks</string>
+    <string name="tab_settings">Settings</string>
 </resources>
