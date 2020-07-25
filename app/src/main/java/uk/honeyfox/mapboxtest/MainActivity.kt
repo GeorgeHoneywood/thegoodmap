@@ -14,21 +14,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-// Mapbox access token is configured here. This needs to be called either in your application
-// object or in the same activity which contains the mapview.
+        // Mapbox access token is configured here. This needs to be called either in your application
+        // object or in the same activity which contains the mapview.
         Mapbox.getInstance(this, getString(R.string.mapbox_access_token))
-
-// This contains the MapView in XML and needs to be called after the access token is configured.
-        setContentView(R.layout.activity_main)
-        mapView?.onCreate(savedInstanceState)
-        mapView?.getMapAsync { mapboxMap ->
-            mapboxMap.setStyle(Style.MAPBOX_STREETS) {
-
-// Map is set up and the style has loaded. Now you can add data or make other map adjustments.
-            }
-        }
     }
+
 
     // Add the mapView lifecycle to the activity's lifecycle methods
     public override fun onResume() {
