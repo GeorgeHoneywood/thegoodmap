@@ -20,24 +20,20 @@ class MapFragment : Fragment() {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_map, container, false)
 
-
-        // This contains the MapView in XML and needs to be called after the access token is configured.
-//                setContentView(R.layout.activity_main)
-                mapView?.onCreate(savedInstanceState)
-                mapView?.getMapAsync { mapboxMap ->
-                    mapboxMap.setStyle(Style.MAPBOX_STREETS) {
-
-        // Map is set up and the style has loaded. Now you can add data or make other map adjustments.
-                    }
-                }
-            }
+    }
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view.findViewById<Button>(R.id.button_first).setOnClickListener {
-            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+        // This contains the MapView in XML and needs to be called after the access token is configured.
+//                setContentView(R.layout.activity_main)
+        mapView?.onCreate(savedInstanceState)
+        mapView?.getMapAsync { mapboxMap ->
+            mapboxMap.setStyle(Style.MAPBOX_STREETS) {
+
+                // Map is set up and the style has loaded. Now you can add data or make other map adjustments.
+            }
         }
     }
 }
