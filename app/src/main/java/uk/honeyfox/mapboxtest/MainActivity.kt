@@ -33,17 +33,17 @@ class MainActivity : AppCompatActivity() {
         // listen for navigation changes
         navHostFragment.navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
-                R.id.fragment_track -> {
-                    runOnUiThread( Runnable() {
-                        run(){
-                            // mark menu item "Tracks" as checked
-                            bottomNavigationView.menu.findItem(R.id.tracklist_fragment).setChecked(true)
-                        }
-                    })
-                }
-                else -> {
-                    // do nothing
-                }
+//                R.id.fragment_track -> {
+//                    runOnUiThread( Runnable() {
+//                        run(){
+//                            // mark menu item "Tracks" as checked
+//                            bottomNavigationView.menu.findItem(R.id.tracklist_fragment).setChecked(true)
+//                        }
+//                    })
+//                }
+//                else -> {
+//                    // do nothing
+//                }
             }
         }
 
