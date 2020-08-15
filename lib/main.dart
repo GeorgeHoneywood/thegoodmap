@@ -4,53 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
-import 'dart:math';
-
-Future<Album> fetchAlbum() async {
-  Random random = new Random();
-  int randomNumber = random.nextInt(100);
-  final response = await http.get(
-      'https://jsonplaceholder.typicode.com/albums/' + randomNumber.toString());
-
-  //[out:json][timeout:25];
-  //// gather results
-  //(
-  //  // query part
-  //  nw["zero_waste"~"(yes|only|limited)"](51.32374658474385,-0.6203842163085936,51.591149236577095,-0.3797149658203125);
-  //  nw[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.32374658474385,-0.6203842163085936,51.591149236577095,-0.3797149658203125);
-  //);
-  //// print results
-  //out center qt;
-  ////>;
-  ////out skel qt;
-
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    return Album.fromJson(json.decode(response.body));
-  } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Failed to load album');
-  }
-}
-
-class Album {
-  final int userId;
-  final int id;
-  final String title;
-
-  Album({this.userId, this.id, this.title});
-
-  factory Album.fromJson(Map<String, dynamic> json) {
-    return Album(
-      userId: json['userId'],
-      id: json['id'],
-      title: json['title'],
-    );
-  }
-}
-
 
 void main() {
   runApp(MyApp());
@@ -104,7 +57,38 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  Future<Album> futureAlbum;
+  Future<Map> futurePoI;
+
+  MapController mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    mapController = MapController();
+  }
+
+  Future<Map> fetchPoI() async {
+    const api_url = "https://overpass-api.de/api/interpreter";
+
+    final bounds = mapController.bounds;
+
+    const query_string =
+    """[out:json][timeout:25];(nwr["zero_waste"~"(yes|only|limited)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["organic"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["bulk_purchase"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
+    const query_string_nodes =
+    """[out:json][timeout:25];(node[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
+
+    final response = await http.post(api_url, body: {"data": query_string});
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      return json.decode(response.body);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to load PoI');
+    }
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -114,9 +98,71 @@ class _MyHomePageState extends State<MyHomePage> {
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
       _counter += 5;
-      futureAlbum = fetchAlbum();
+
+      futurePoI = fetchPoI();
+      futurePoI
+          .then((value) => handlePoI(value))
+          .catchError((error) => handleError(error));
     });
   }
+
+  void handlePoI(PoIs) {
+    PoIs = PoIs["elements"];
+
+    PoIs.forEach((PoI) {
+      if (PoI["type"] == "node") {
+        _markers.add(Marker(
+          point: new LatLng(PoI["lat"], PoI["lon"]),
+          builder: (ctx) => new Container(
+            child: new Icon(
+              Icons.place,
+              color: Colors.blue,
+              size: 36.0,
+            ),
+          ),
+          anchorPos: AnchorPos.align(AnchorAlign.top)
+        ));
+      } else {
+        _markers.add(Marker(
+          point: new LatLng(PoI["center"]["lat"], PoI["center"]["lon"]),
+          builder: (ctx) => new Container(
+            child: new Icon(
+              Icons.place,
+              color: Colors.blue,
+              size: 36.0,
+            ),
+          ),
+            anchorPos: AnchorPos.align(AnchorAlign.top)
+        ));
+      }
+    });
+  }
+
+  void handleError(error) {
+    print("pain");
+  }
+
+  List<Marker> _markers = <Marker>[
+//    Marker(
+//      width: 80.0,
+//      height: 80.0,
+//      point: new LatLng(51.5, -0.09),
+//      builder: (ctx) =>
+//      new Container(
+//        child: new FlutterLogo(),
+//      ),
+//    ),
+    Marker(
+      point: new LatLng(51.5, -0.010),
+      builder: (ctx) => new Container(
+        child: new Icon(
+          Icons.place,
+          color: Colors.green,
+          size: 36.0,
+        ),
+      ),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -153,61 +199,38 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Text(
-              'You have pushed the button this manyy times:',
-            ),
-            Text(
               '$_counter',
               style: Theme.of(context).textTheme.headline4,
             ),
-            Text(
-              "You are a clever boy",
-            ),
             Container(
               // here
-              height: 200,
+              height: 400,
               alignment: Alignment.centerLeft,
               child: FlutterMap(
+                mapController: mapController,
                 options: new MapOptions(
                   center: new LatLng(51.5, -0.09),
                   zoom: 13.0,
+                  maxZoom: 19,
+                  minZoom: 0,
                 ),
                 layers: [
                   new TileLayerOptions(
+                      maxZoom: 19,
+                      minZoom: 0,
                       urlTemplate:
                           "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                       subdomains: ['a', 'b', 'c']),
-                  new MarkerLayerOptions(
-                    markers: [
-//                        new Marker(
-//                          width: 80.0,
-//                          height: 80.0,
-//                          point: new LatLng(51.5, -0.09),
-//                          builder: (ctx) =>
-//                          new Container(
-//                            child: new FlutterLogo(),
-//                          ),
-//                        ),
-                      new Marker(
-                        point: new LatLng(51.5, -0.010),
-                        builder: (ctx) => new Container(
-                          child: new Icon(
-                            Icons.place,
-                            color: Colors.green,
-                            size: 36.0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  new MarkerLayerOptions(markers: _markers),
                 ],
               ),
             ),
             Center(
-              child: FutureBuilder<Album>(
-                future: futureAlbum,
+              child: FutureBuilder<Map>(
+                future: futurePoI,
                 builder: (context, snapshot) {
                   if (snapshot.hasData) {
-                    return Text(snapshot.data.title);
+                    return Text(snapshot.data["version"].toString());
                   } else if (snapshot.hasError) {
                     return Text("${snapshot.error}");
                   }
@@ -228,5 +251,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
-
