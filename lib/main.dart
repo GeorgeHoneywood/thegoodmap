@@ -1,6 +1,56 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
+import 'package:http/http.dart' as http;
+import 'dart:math';
+
+Future<Album> fetchAlbum() async {
+  Random random = new Random();
+  int randomNumber = random.nextInt(100);
+  final response = await http.get(
+      'https://jsonplaceholder.typicode.com/albums/' + randomNumber.toString());
+
+  //[out:json][timeout:25];
+  //// gather results
+  //(
+  //  // query part
+  //  nw["zero_waste"~"(yes|only|limited)"](51.32374658474385,-0.6203842163085936,51.591149236577095,-0.3797149658203125);
+  //  nw[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.32374658474385,-0.6203842163085936,51.591149236577095,-0.3797149658203125);
+  //);
+  //// print results
+  //out center qt;
+  ////>;
+  ////out skel qt;
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+    return Album.fromJson(json.decode(response.body));
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to load album');
+  }
+}
+
+class Album {
+  final int userId;
+  final int id;
+  final String title;
+
+  Album({this.userId, this.id, this.title});
+
+  factory Album.fromJson(Map<String, dynamic> json) {
+    return Album(
+      userId: json['userId'],
+      id: json['id'],
+      title: json['title'],
+    );
+  }
+}
+
 
 void main() {
   runApp(MyApp());
@@ -54,6 +104,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  Future<Album> futureAlbum;
+
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -61,7 +113,8 @@ class _MyHomePageState extends State<MyHomePage> {
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter+= 5;
+      _counter += 5;
+      futureAlbum = fetchAlbum();
     });
   }
 
@@ -104,41 +157,65 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Text(
               '$_counter',
-              style: Theme.of(context).textTheme.headline1,
+              style: Theme.of(context).textTheme.headline4,
             ),
             Text(
               "You are a clever boy",
             ),
             Container(
               // here
-              height: 300,
+              height: 200,
               alignment: Alignment.centerLeft,
-              child:
-                FlutterMap(
-                  options: new MapOptions(
-                    center: new LatLng(51.5, -0.09),
-                    zoom: 13.0,
-                  ),
-                  layers: [
-                    new TileLayerOptions(
-                        urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                        subdomains: ['a', 'b', 'c']
-                    ),
-                    new MarkerLayerOptions(
-                      markers: [
-                        new Marker(
-                          width: 80.0,
-                          height: 80.0,
-                          point: new LatLng(51.5, -0.09),
-                          builder: (ctx) =>
-                          new Container(
-                            child: new FlutterLogo(),
+              child: FlutterMap(
+                options: new MapOptions(
+                  center: new LatLng(51.5, -0.09),
+                  zoom: 13.0,
+                ),
+                layers: [
+                  new TileLayerOptions(
+                      urlTemplate:
+                          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      subdomains: ['a', 'b', 'c']),
+                  new MarkerLayerOptions(
+                    markers: [
+//                        new Marker(
+//                          width: 80.0,
+//                          height: 80.0,
+//                          point: new LatLng(51.5, -0.09),
+//                          builder: (ctx) =>
+//                          new Container(
+//                            child: new FlutterLogo(),
+//                          ),
+//                        ),
+                      new Marker(
+                        point: new LatLng(51.5, -0.010),
+                        builder: (ctx) => new Container(
+                          child: new Icon(
+                            Icons.place,
+                            color: Colors.green,
+                            size: 36.0,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Center(
+              child: FutureBuilder<Album>(
+                future: futureAlbum,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Text(snapshot.data.title);
+                  } else if (snapshot.hasError) {
+                    return Text("${snapshot.error}");
+                  }
+
+                  // By default, show a loading spinner.
+                  return CircularProgressIndicator();
+                },
+              ),
             ),
           ],
         ),
@@ -151,3 +228,5 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+
