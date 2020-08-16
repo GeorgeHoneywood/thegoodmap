@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'WasteMap',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'WasteMap'),
     );
   }
 }
@@ -100,14 +100,13 @@ out tags qt center;
     }
   }
 
-  void _incrementCounter() {
+  void loadPoI() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter += 5;
 
       futurePoI = fetchPoI();
       futurePoI
@@ -154,24 +153,15 @@ out tags qt center;
 
   List<Marker> _markers = <Marker>[
 //    Marker(
-//      width: 80.0,
-//      height: 80.0,
-//      point: new LatLng(51.5, -0.09),
-//      builder: (ctx) =>
-//      new Container(
-//        child: new FlutterLogo(),
+//      point: new LatLng(51.5, -0.010),
+//      builder: (ctx) => new Container(
+//        child: new Icon(
+//          Icons.place,
+//          color: Colors.green,
+//          size: 36.0,
+//        ),
 //      ),
 //    ),
-    Marker(
-      point: new LatLng(51.5, -0.010),
-      builder: (ctx) => new Container(
-        child: new Icon(
-          Icons.place,
-          color: Colors.green,
-          size: 36.0,
-        ),
-      ),
-    ),
   ];
 
   @override
@@ -208,10 +198,6 @@ out tags qt center;
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
             Container(
               // here
               height: 400,
@@ -235,28 +221,13 @@ out tags qt center;
                 ],
               ),
             ),
-            Center(
-              child: FutureBuilder<Map>(
-                future: futurePoI,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Text(snapshot.data["version"].toString());
-                  } else if (snapshot.hasError) {
-                    return Text("${snapshot.error}");
-                  }
-
-                  // By default, show a loading spinner.
-                  return CircularProgressIndicator();
-                },
-              ),
-            ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+        onPressed: loadPoI,
+        tooltip: 'Load Points of Interest',
+        child: Icon(Icons.search),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
