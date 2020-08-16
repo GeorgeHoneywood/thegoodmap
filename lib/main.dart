@@ -72,12 +72,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
     final bounds = mapController.bounds;
 
-    const query_string =
+    final queryString = """
+[out:json][timeout:25][bbox:${bounds.south},${bounds.west},${bounds.north},${bounds.east}];
+(nwr["zero_waste"~"(yes|only|limited)"];
+ nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"];
+ nwr["organic"~"(yes|limited|only)"];
+ nwr["bulk_purchase"~"(yes|limited|only)"];
+);
+out tags qt center;
+""";
+
+    const old_query_string =
     """[out:json][timeout:25];(nwr["zero_waste"~"(yes|only|limited)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["organic"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["bulk_purchase"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
     const query_string_nodes =
     """[out:json][timeout:25];(node[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
 
-    final response = await http.post(api_url, body: {"data": query_string});
+    final response = await http.post(api_url, body: {"data": queryString});
 
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
