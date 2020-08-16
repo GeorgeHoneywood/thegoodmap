@@ -56,6 +56,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   int _counter = 0;
 
   Future<Map> futurePoI;
@@ -82,12 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
 );
 out tags qt center;
 """;
-
-    const old_query_string =
-        """[out:json][timeout:25];(nwr["zero_waste"~"(yes|only|limited)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["organic"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["bulk_purchase"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
-    const query_string_nodes =
-        """[out:json][timeout:25];(node[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
-
+    
     final response = await http.post(api_url, body: {"data": queryString});
 
     if (response.statusCode == 200) {
@@ -108,35 +105,40 @@ out tags qt center;
         .catchError((error) => handleError(error));
   }
 
+  Marker createMarker(double lat, double lon, Map<String, dynamic> tags) {
+    return Marker(
+      point: new LatLng(lat, lon),
+      anchorPos: AnchorPos.align(AnchorAlign.top),
+      builder: (ctx) => new Container(
+        child: GestureDetector(
+          onTap: () {
+            _scaffoldKey.currentState.showSnackBar(SnackBar(
+              content: Text(tags["name"]),
+            ));
+          },
+          child: new Icon(
+            Icons.place,
+            color: Colors.blue,
+            size: 36.0,
+          ),
+        ),
+      ),
+    );
+  }
+
   void handlePoI(PoIs) {
     PoIs = PoIs["elements"];
 
     setState(() {
       PoIs.forEach((PoI) {
         if (PoI["type"] == "node") {
-          _markers.add(Marker(
-              point: new LatLng(PoI["lat"], PoI["lon"]),
-              builder: (ctx) => new Container(
-                    child: new Icon(
-                      Icons.place,
-                      color: Colors.blue,
-                      size: 36.0,
-                    ),
-                  ),
-              anchorPos: AnchorPos.align(AnchorAlign.top)));
+          _markers.add(createMarker(PoI["lat"], PoI["lon"], PoI["tags"]));
         } else {
-          _markers.add(Marker(
-              point: new LatLng(PoI["center"]["lat"], PoI["center"]["lon"]),
-              builder: (ctx) => new Container(
-                    child: new Icon(
-                      Icons.place,
-                      color: Colors.blue,
-                      size: 36.0,
-                    ),
-                  ),
-              anchorPos: AnchorPos.align(AnchorAlign.top)));
+          _markers.add(createMarker(
+              PoI["center"]["lat"], PoI["center"]["lon"], PoI["tags"]));
         }
       });
+      _markers = List.from(_markers);
     });
   }
 
@@ -166,6 +168,7 @@ out tags qt center;
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
@@ -210,7 +213,25 @@ out tags qt center;
                       urlTemplate:
                           "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                       subdomains: ['a', 'b', 'c']),
-                  new MarkerLayerOptions(markers: _markers),
+                  //new MarkerLayerOptions(markers: _markers),
+                  MarkerClusterLayerOptions(
+                    maxClusterRadius: 120,
+                    size: Size(40, 40),
+                    fitBoundsOptions: FitBoundsOptions(
+                      padding: EdgeInsets.all(50),
+                    ),
+                    markers: _markers,
+                    polygonOptions: PolygonOptions(
+                        borderColor: Colors.blueAccent,
+                        color: Colors.black12,
+                        borderStrokeWidth: 3),
+                    builder: (context, markers) {
+                      return FloatingActionButton(
+                        child: Text(markers.length.toString()),
+                        onPressed: null,
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
