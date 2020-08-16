@@ -1,5 +1,5 @@
-name: flutter_map_test
-description: A new Flutter application.
+name: WasteMap
+description: An app to help the enviromentally conscious find their way.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -25,6 +25,7 @@ dependencies:
     sdk: flutter
 
   flutter_map: any
+  flutter_map_marker_cluster: any
 
   http: any
 

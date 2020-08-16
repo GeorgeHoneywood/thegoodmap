@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
 
@@ -83,9 +84,9 @@ out tags qt center;
 """;
 
     const old_query_string =
-    """[out:json][timeout:25];(nwr["zero_waste"~"(yes|only|limited)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["organic"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["bulk_purchase"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
+        """[out:json][timeout:25];(nwr["zero_waste"~"(yes|only|limited)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["organic"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375);nwr["bulk_purchase"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
     const query_string_nodes =
-    """[out:json][timeout:25];(node[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
+        """[out:json][timeout:25];(node[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"](51.404774404834,-0.38074493408203,51.587523064499,-0.14007568359375););out tags qt center;""";
 
     final response = await http.post(api_url, body: {"data": queryString});
 
@@ -101,49 +102,41 @@ out tags qt center;
   }
 
   void loadPoI() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-
-      futurePoI = fetchPoI();
-      futurePoI
-          .then((value) => handlePoI(value))
-          .catchError((error) => handleError(error));
-    });
+    futurePoI = fetchPoI();
+    futurePoI
+        .then((value) => handlePoI(value))
+        .catchError((error) => handleError(error));
   }
 
   void handlePoI(PoIs) {
     PoIs = PoIs["elements"];
 
-    PoIs.forEach((PoI) {
-      if (PoI["type"] == "node") {
-        _markers.add(Marker(
-          point: new LatLng(PoI["lat"], PoI["lon"]),
-          builder: (ctx) => new Container(
-            child: new Icon(
-              Icons.place,
-              color: Colors.blue,
-              size: 36.0,
-            ),
-          ),
-          anchorPos: AnchorPos.align(AnchorAlign.top)
-        ));
-      } else {
-        _markers.add(Marker(
-          point: new LatLng(PoI["center"]["lat"], PoI["center"]["lon"]),
-          builder: (ctx) => new Container(
-            child: new Icon(
-              Icons.place,
-              color: Colors.blue,
-              size: 36.0,
-            ),
-          ),
-            anchorPos: AnchorPos.align(AnchorAlign.top)
-        ));
-      }
+    setState(() {
+      PoIs.forEach((PoI) {
+        if (PoI["type"] == "node") {
+          _markers.add(Marker(
+              point: new LatLng(PoI["lat"], PoI["lon"]),
+              builder: (ctx) => new Container(
+                    child: new Icon(
+                      Icons.place,
+                      color: Colors.blue,
+                      size: 36.0,
+                    ),
+                  ),
+              anchorPos: AnchorPos.align(AnchorAlign.top)));
+        } else {
+          _markers.add(Marker(
+              point: new LatLng(PoI["center"]["lat"], PoI["center"]["lon"]),
+              builder: (ctx) => new Container(
+                    child: new Icon(
+                      Icons.place,
+                      color: Colors.blue,
+                      size: 36.0,
+                    ),
+                  ),
+              anchorPos: AnchorPos.align(AnchorAlign.top)));
+        }
+      });
     });
   }
 
@@ -198,10 +191,7 @@ out tags qt center;
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            Container(
-              // here
-              height: 400,
-              alignment: Alignment.centerLeft,
+            Flexible(
               child: FlutterMap(
                 mapController: mapController,
                 options: new MapOptions(
@@ -209,6 +199,9 @@ out tags qt center;
                   zoom: 13.0,
                   maxZoom: 19,
                   minZoom: 0,
+                  plugins: [
+                    MarkerClusterPlugin(),
+                  ],
                 ),
                 layers: [
                   new TileLayerOptions(
