@@ -84,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
 );
 out tags qt center;
 """;
-    
+
     final response = await http.post(api_url, body: {"data": queryString});
 
     if (response.statusCode == 200) {
@@ -112,9 +112,15 @@ out tags qt center;
       builder: (ctx) => new Container(
         child: GestureDetector(
           onTap: () {
-            _scaffoldKey.currentState.showSnackBar(SnackBar(
-              content: Text(tags["name"]),
-            ));
+            //_scaffoldKey.currentState.showSnackBar(SnackBar(
+            //  content: Text(tags["name"]),
+            //));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailTable(tags: tags),
+              ),
+            );
           },
           child: new Icon(
             Icons.place,
@@ -129,6 +135,8 @@ out tags qt center;
   void handlePoI(PoIs) {
     PoIs = PoIs["elements"];
 
+    PoIs = filterPoIs(PoIs);
+
     setState(() {
       PoIs.forEach((PoI) {
         if (PoI["type"] == "node") {
@@ -140,6 +148,18 @@ out tags qt center;
       });
       _markers = List.from(_markers);
     });
+  }
+
+  List filterPoIs(List PoIs) {
+    List filteredPoIs = new List();
+
+    PoIs.forEach((PoI) {
+      if (PoI["tags"].containsKey("diet:vegan")) {
+        filteredPoIs.add(PoI);
+      }
+    });
+
+    return filteredPoIs;
   }
 
   void handleError(error) {
@@ -230,6 +250,7 @@ out tags qt center;
                       return FloatingActionButton(
                         child: Text(markers.length.toString()),
                         onPressed: null,
+                        heroTag: null,
                       );
                     },
                   ),
@@ -243,7 +264,57 @@ out tags qt center;
         onPressed: loadPoI,
         tooltip: 'Load Points of Interest',
         child: Icon(Icons.search),
+        heroTag: "loadPoI",
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class DetailTable extends StatelessWidget {
+  final Map tags;
+
+  DetailTable({Key key, @required this.tags}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    List<DataRow> _dataRows = [];
+
+    tags.forEach((key, value) {
+      _dataRows.add(new DataRow(cells: <DataCell>[
+        new DataCell(Text(key)),
+        new DataCell(Text(value)),
+      ]));
+    });
+
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(tags["name"]),
+        ),
+        body: SingleChildScrollView(
+            padding: EdgeInsets.all(0),
+            child: Container(
+              child: Column(
+                children: [
+                  DataTable(
+                    dataRowHeight: 35,
+                    columns: const <DataColumn>[
+                      DataColumn(
+                        label: Text(
+                          'Key',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Value',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ],
+                    rows: _dataRows,
+                  ),
+                ],
+              ),
+            )));
   }
 }
