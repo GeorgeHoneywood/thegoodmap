@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'mappage.dart';
-import 'tippage.dart' ;
+import 'tippage.dart';
 
 void main() => runApp(MyApp());
 
@@ -12,7 +12,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.lightGreen,
-//
       ),
       home: MyHomePage(title: 'The Good Map'),
     );
@@ -29,9 +28,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   static List<Widget> _myPages = <Widget>[PageOne(), PageTwo()];
-
 
   int _selectedIndex = 0;
 
@@ -40,7 +37,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _selectedIndex = index;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +51,6 @@ class _MyHomePageState extends State<MyHomePage> {
           BottomNavigationBarItem(
             icon: Icon(
               Icons.map,
-
             ),
             title: Text('Map'),
           ),
@@ -66,7 +61,8 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text(
               'Tips',
             ),
-          )],
+          )
+        ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
