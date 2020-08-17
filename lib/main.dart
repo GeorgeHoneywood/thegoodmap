@@ -208,12 +208,13 @@ out tags qt center;
                 ),
                 layers: [
                   new TileLayerOptions(
+                      // tileProvider: NetworkTileProvider(), // needed to make map load on desktop
                       maxZoom: 19,
                       minZoom: 0,
                       urlTemplate:
                           "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                       subdomains: ['a', 'b', 'c']),
-                  //new MarkerLayerOptions(markers: _markers),
+                  // new MarkerLayerOptions(markers: _markers), // before i used the cluster thingy
                   MarkerClusterLayerOptions(
                     maxClusterRadius: 120,
                     size: Size(40, 40),
