@@ -103,3 +103,9 @@ lib/generated_plugin_registrant.dart
 
 # End of https://www.toptal.com/developers/gitignore/api/flutter
 pubspec.lock
+.gradle/
+build.gradle
+gradle/
+gradlew
+gradlew.bat
+local.properties
