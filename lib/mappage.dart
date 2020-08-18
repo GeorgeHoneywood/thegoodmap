@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 
 List<Marker> markers = [];
 MapController mapController;
@@ -19,15 +20,20 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  static LatLng pos;
+
+
   MapController _mapController;
 
   Future<Map> futurePoI;
   List<Marker> _markers = <Marker>[];
+  Position _currentPosition;
 
   @override
-  void initState() {
-    super.initState();
+  void initState(){
     _mapController = MapController();
+    _getCurrentLocation();
+    super.initState();
   }
 
   Future<Map> fetchPoI() async {
@@ -106,89 +112,106 @@ out tags qt center;
     print(error);
   }
 
+  Future<void> _getCurrentLocation() async {
+    await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
+        .then((Position _position) {
+          if (_position != null) {
+          setState(() {
+            pos = LatLng(_position.latitude, _position.longitude);
+          });}
+          print("${_position.latitude}, ${_position.longitude}");
+
+
+          //return new LatLng(position.latitude, position.longitude);
+      //return position;
+    } ).catchError((e) {
+      print(e);
+    });
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
-
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Flexible(
-              child: FlutterMap(
-                mapController: _mapController != null ? _mapController : mapController,
-                options: new MapOptions(
-                  center: new LatLng(51.5, -0.09),
-                  zoom: 13.0,
-                  maxZoom: 19,
-                  minZoom: 0,
-                  plugins: [
-                    MarkerClusterPlugin(),
+        key: _scaffoldKey,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Flexible(
+                child: FlutterMap(
+                  mapController:
+                      _mapController != null ? _mapController : mapController,
+                  options: new MapOptions(
+                    center: new LatLng(pos.latitude, pos.longitude), // new LatLng(51.5, -0.09),
+                    zoom: 13.0,
+                    maxZoom: 19,
+                    minZoom: 0,
+                    plugins: [
+                      MarkerClusterPlugin(),
+                    ],
+                  ),
+                  layers: [
+                    new TileLayerOptions(
+                        // tileProvider: NetworkTileProvider(), // needed to make map load on desktop
+                        maxZoom: 19,
+                        minZoom: 0,
+                        urlTemplate:
+                            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                        subdomains: ['a', 'b', 'c']),
+                    // new MarkerLayerOptions(markers: _markers), // before i used the cluster thingy
+                    MarkerClusterLayerOptions(
+                      maxClusterRadius: 120,
+                      size: Size(40, 40),
+                      fitBoundsOptions: FitBoundsOptions(
+                        padding: EdgeInsets.all(50),
+                      ),
+                      markers: _markers.isNotEmpty ? _markers : markers,
+                      polygonOptions: PolygonOptions(
+                          borderColor: Colors.lightGreen,
+                          color: Colors.black12,
+                          borderStrokeWidth: 3),
+                      builder: (context, markers) {
+                        return FloatingActionButton(
+                          child: Text(markers.length.toString(),
+                              style: TextStyle(color: Colors.white)),
+                          onPressed: null,
+                          backgroundColor: Colors.lightGreen,
+                          heroTag: null,
+                        );
+                      },
+                    ),
                   ],
                 ),
-                layers: [
-                  new TileLayerOptions(
-                      // tileProvider: NetworkTileProvider(), // needed to make map load on desktop
-                      maxZoom: 19,
-                      minZoom: 0,
-                      urlTemplate:
-                          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                      subdomains: ['a', 'b', 'c']),
-                  // new MarkerLayerOptions(markers: _markers), // before i used the cluster thingy
-                  MarkerClusterLayerOptions(
-                    maxClusterRadius: 120,
-                    size: Size(40, 40),
-                    fitBoundsOptions: FitBoundsOptions(
-                      padding: EdgeInsets.all(50),
-                    ),
-                    markers: _markers.isNotEmpty ? _markers : markers,
-                    polygonOptions: PolygonOptions(
-                        borderColor: Colors.lightGreen,
-                        color: Colors.black12,
-                        borderStrokeWidth: 3),
-                    builder: (context, markers) {
-                      return FloatingActionButton(
-                        child: Text(markers.length.toString(), style: TextStyle( color: Colors.white)),
-                        onPressed: null,
-                        backgroundColor: Colors.lightGreen,
-                        heroTag: null,
-                      );
-                    },
-                  ),
-                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            FloatingActionButton(
-                onPressed: () {},
-                tooltip: 'Add To Map',
-                child: Icon(Icons.add, color: Colors.white),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              FloatingActionButton(
+                  onPressed: () {},
+                  tooltip: 'Add To Map',
+                  child: Icon(Icons.add, color: Colors.white),
+                  backgroundColor: Colors.lightGreen,
+                  heroTag: null),
+              FloatingActionButton(
+                onPressed: loadPoI,
+                tooltip: 'Load Points of Interest',
+                child: Icon(Icons.search, color: Colors.white),
                 backgroundColor: Colors.lightGreen,
-                heroTag: null
-            ),
-            FloatingActionButton(
-              onPressed: loadPoI,
-              tooltip: 'Load Points of Interest',
-              child: Icon(Icons.search, color: Colors.white),
-              backgroundColor: Colors.lightGreen,
-              heroTag: null,
-            )
-          ],
-        ),
-      )//
+                heroTag: null,
+              )
+            ],
+          ),
+        ) //
 
-
-    );
+        );
   }
 }
 
