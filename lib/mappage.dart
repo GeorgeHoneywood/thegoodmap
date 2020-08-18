@@ -11,7 +11,7 @@ class PageOne extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+    debugShowCheckedModeBanner: false,
       //title: 'The Good Map',
       theme: ThemeData(
 
@@ -95,7 +95,7 @@ out tags qt center;
           },
           child: new Icon(
             Icons.place,
-            color: Colors.blue,
+            color: Colors.lightGreen,
             size: 36.0,
           ),
         ),
@@ -168,13 +168,14 @@ out tags qt center;
                     ),
                     markers: _markers,
                     polygonOptions: PolygonOptions(
-                        borderColor: Colors.blueAccent,
+                        borderColor: Colors.lightGreen,
                         color: Colors.black12,
                         borderStrokeWidth: 3),
                     builder: (context, markers) {
                       return FloatingActionButton(
                         child: Text(markers.length.toString()),
                         onPressed: null,
+                        backgroundColor: Colors.lightGreen,
                       );
                     },
                   ),
@@ -189,10 +190,12 @@ out tags qt center;
         tooltip: 'Load Points of Interest',
         child: Icon(Icons.search),
         backgroundColor: Colors.lightGreen,
-        //alignment: Alignment.bottomRight
+       // alignment: Alignment.bottomRight,
       ),
       //floatingActionButton1: FloatingActionButton(
-        //onPressed: null,
+        //onPressed: () {
+      //
+      // },
         //tooltip: 'Add to map',
         //child: Icon(Icons.add),
       //backgroundColor: Colors.lightGreen,

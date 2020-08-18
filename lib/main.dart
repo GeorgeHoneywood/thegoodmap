@@ -14,6 +14,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.lightGreen,
+          primaryTextTheme: TextTheme(
+        headline6: TextStyle(
+          color: Colors.white,
+          )
+          )
 //
       ),
       home: MyHomePage(title: 'The Good Map'),
