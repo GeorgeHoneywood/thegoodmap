@@ -60,4 +60,5 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation("com.google.android.gms:play-services-base:17.0.0"){ force = true } // crashes on android 10 otherwise
 }

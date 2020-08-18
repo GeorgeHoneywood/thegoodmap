@@ -74,9 +74,10 @@ out tags qt center;
 
   void loadPoI() {
     futurePoI = fetchPoI();
-    futurePoI
-        .then((PoIs) => _unfilteredPoIs = PoIs["elements"])
-        .catchError((error) => handleError(error));
+    futurePoI.then((PoIs) {
+      _unfilteredPoIs = PoIs["elements"];
+      handlePoI();
+    }).catchError((error) => handleError(error));
   }
 
   Marker createMarker(double lat, double lon, Map<String, dynamic> tags) {
@@ -114,25 +115,30 @@ out tags qt center;
 
     RegExp re = new RegExp(_filters.join("|"));
 
-    unfilteredPoIs.where((PoI) => re.hasMatch(PoI["tags"].keys.toString()));
+    filteredPoIs = unfilteredPoIs.where((PoI) => re.hasMatch(PoI["tags"].keys.join(" "))).toList();
 
-    return unfilteredPoIs;
+    return filteredPoIs;
   }
 
   void handlePoI() {
     List filteredPoIs = filterPoIs(_unfilteredPoIs);
 
     setState(() {
+      _markers.clear(); markers.clear();
+
       filteredPoIs.forEach((PoI) {
+        //if (!_markers.contains(PoI)) { // would be better but idc
+
         if (PoI["type"] == "node") {
           _markers.add(createMarker(PoI["lat"], PoI["lon"], PoI["tags"]));
         } else {
           _markers.add(createMarker(
               PoI["center"]["lat"], PoI["center"]["lon"], PoI["tags"]));
         }
+        //}
+        _markers = List.from(_markers);
+        markers = List.from(_markers);
       });
-      _markers = List.from(_markers);
-      markers = _markers;
     });
   }
 
