@@ -149,7 +149,7 @@ out tags qt center;
                         borderStrokeWidth: 3),
                     builder: (context, markers) {
                       return FloatingActionButton(
-                        child: Text(markers.length.toString()),
+                        child: Text(markers.length.toString(), style: TextStyle( color: Colors.white)),
                         onPressed: null,
                         backgroundColor: Colors.lightGreen,
                         heroTag: null,
@@ -162,25 +162,32 @@ out tags qt center;
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: loadPoI,
-        tooltip: 'Load Points of Interest',
-        child: Icon(Icons.search),
-        backgroundColor: Colors.lightGreen,
-        // alignment: Alignment.bottomRight,
-      ),
-      //floatingActionButton1: FloatingActionButton(
-      //onPressed: () {
-      //
-      // },
-      //tooltip: 'Add to map',
-      //child: Icon(Icons.add),
-      //onPressed: null,
-      //tooltip: 'Add to map',
-      //child: Icon(Icons.add),
-      //backgroundColor: Colors.lightGreen,
-      //alignment: Alignment.bottomLeft
-      //)// This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButtonLocation:
+      FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            FloatingActionButton(
+                onPressed: () {},
+                tooltip: 'Add To Map',
+                child: Icon(Icons.add, color: Colors.white),
+                backgroundColor: Colors.lightGreen,
+                heroTag: null
+            ),
+            FloatingActionButton(
+              onPressed: loadPoI,
+              tooltip: 'Load Points of Interest',
+              child: Icon(Icons.search, color: Colors.white),
+              backgroundColor: Colors.lightGreen,
+              heroTag: null,
+            )
+          ],
+        ),
+      )//
+
+
     );
   }
 }
