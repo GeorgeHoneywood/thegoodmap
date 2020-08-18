@@ -6,10 +6,13 @@ import 'tippage.dart';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  final navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
+      //debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.lightGreen,
       ),
@@ -28,9 +31,16 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  static List<Widget> _myPages = <Widget>[PageOne(), PageTwo()];
+  final List<Widget> _myPages = <Widget>[
+    MapPage(
+      key: PageStorageKey('MapPage'),
+    ),
+    TipPage(key: PageStorageKey('TipPage'))
+  ];
 
   int _selectedIndex = 0;
+
+  final PageStorageBucket _bucket = PageStorageBucket();
 
   void _onItemTapped(int index) {
     setState(() {
@@ -44,7 +54,6 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: _myPages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
@@ -65,6 +74,10 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+      ),
+      body: PageStorage(
+        child: _myPages[_selectedIndex],
+        bucket: _bucket,
       ),
     );
   }

@@ -6,49 +6,34 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
 
-class PageOne extends StatelessWidget {
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      //title: 'The Good Map',
-      theme: ThemeData(
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: MyHomePage(),
-    );
-  }
-}
+List<Marker> markers = [];
+MapController mapController;
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  final String title;
+class MapPage extends StatefulWidget {
+  MapPage({Key key}) : super(key: key);
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MapPageState createState() => _MapPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MapPageState extends State<MapPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  int _counter = 0;
+  MapController _mapController;
 
   Future<Map> futurePoI;
-
-  MapController mapController;
+  List<Marker> _markers = <Marker>[];
 
   @override
   void initState() {
     super.initState();
-    mapController = MapController();
+    _mapController = MapController();
   }
 
   Future<Map> fetchPoI() async {
     const api_url = "https://overpass-api.de/api/interpreter";
 
-    final bounds = mapController.bounds;
+    final bounds = _mapController.bounds;
 
     final queryString = """
 [out:json][timeout:25][bbox:${bounds.south},${bounds.west},${bounds.north},${bounds.east}];
@@ -84,9 +69,9 @@ out tags qt center;
         child: GestureDetector(
           onTap: () {
             Navigator.push(
-              context,
+              ctx,
               MaterialPageRoute(
-                builder: (context) => DetailTable(tags: tags),
+                builder: (ctx) => DetailTable(tags: tags),
               ),
             );
           },
@@ -113,14 +98,13 @@ out tags qt center;
         }
       });
       _markers = List.from(_markers);
+      markers = _markers;
     });
   }
 
   void handleError(error) {
-    print("pain");
+    print(error);
   }
-
-  List<Marker> _markers = <Marker>[];
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +117,7 @@ out tags qt center;
           children: <Widget>[
             Flexible(
               child: FlutterMap(
-                mapController: mapController,
+                mapController: _mapController != null ? _mapController : mapController,
                 options: new MapOptions(
                   center: new LatLng(51.5, -0.09),
                   zoom: 13.0,
@@ -158,7 +142,7 @@ out tags qt center;
                     fitBoundsOptions: FitBoundsOptions(
                       padding: EdgeInsets.all(50),
                     ),
-                    markers: _markers,
+                    markers: _markers.isNotEmpty ? _markers : markers,
                     polygonOptions: PolygonOptions(
                         borderColor: Colors.blueAccent,
                         color: Colors.black12,

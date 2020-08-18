@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-class PageTwo extends StatelessWidget {
+class TipPage extends StatelessWidget {
+  const TipPage({Key key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Column(
