@@ -8,6 +8,8 @@ import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
 List<Marker> markers = [];
+LatLng savedPosition;
+double savedZoom;
 MapController mapController;
 
 class MapPage extends StatefulWidget {
@@ -22,7 +24,6 @@ class _MapPageState extends State<MapPage> {
 
   static LatLng pos;
 
-
   MapController _mapController;
 
   Future<Map> futurePoI;
@@ -30,7 +31,7 @@ class _MapPageState extends State<MapPage> {
   Position _currentPosition;
 
   @override
-  void initState(){
+  void initState() {
     _mapController = MapController();
     _getCurrentLocation();
     super.initState();
@@ -91,8 +92,22 @@ out tags qt center;
     );
   }
 
+  List filterPoIs(List PoIs) {
+    List filteredPoIs = new List();
+
+    PoIs.forEach((PoI) {
+      if (PoI["tags"].containsKey("diet:vegan")) {
+        filteredPoIs.add(PoI);
+      }
+    });
+
+    return filteredPoIs;
+  }
+
   void handlePoI(PoIs) {
     PoIs = PoIs["elements"];
+
+    PoIs = filterPoIs(PoIs);
 
     setState(() {
       PoIs.forEach((PoI) {
@@ -116,19 +131,18 @@ out tags qt center;
     await Geolocator()
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
         .then((Position _position) {
-          if (_position != null) {
-          setState(() {
-            pos = LatLng(_position.latitude, _position.longitude);
-          });}
-          print("${_position.latitude}, ${_position.longitude}");
+      if (_position != null) {
+        setState(() {
+          pos = LatLng(_position.latitude, _position.longitude);
+        });
+      }
+      print("${_position.latitude}, ${_position.longitude}");
 
-
-          //return new LatLng(position.latitude, position.longitude);
+      //return new LatLng(position.latitude, position.longitude);
       //return position;
-    } ).catchError((e) {
+    }).catchError((e) {
       print(e);
     });
-
   }
 
   @override
@@ -140,12 +154,19 @@ out tags qt center;
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               Flexible(
-                child: FlutterMap(
+                  child: Stack(children: [
+                FlutterMap(
                   mapController:
                       _mapController != null ? _mapController : mapController,
                   options: new MapOptions(
-                    center: new LatLng(pos.latitude, pos.longitude), // new LatLng(51.5, -0.09),
-                    zoom: 13.0,
+                    center: savedPosition != null
+                        ? savedPosition
+                        : new LatLng(pos.latitude, pos.longitude),
+                    onPositionChanged: (mapPosition, boolValue) {
+                      savedPosition = mapPosition.center;
+                      savedZoom = mapPosition.zoom;
+                    },
+                    zoom: savedZoom != null ? savedZoom : 13.0,
                     maxZoom: 19,
                     minZoom: 0,
                     plugins: [
@@ -184,7 +205,8 @@ out tags qt center;
                     ),
                   ],
                 ),
-              ),
+                Text("test text")
+              ])),
             ],
           ),
         ),
@@ -210,7 +232,6 @@ out tags qt center;
             ],
           ),
         ) //
-
         );
   }
 }
