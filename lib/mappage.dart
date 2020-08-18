@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 
 List<Marker> markers = [];
 LatLng savedPosition;
@@ -21,23 +22,30 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  static LatLng pos;
+
   MapController _mapController;
 
   Future<Map> futurePoI;
   List<Marker> _markers = <Marker>[];
+
   List _unfilteredPoIs = [];
   List<String> _filters = <String>[];
   final List<FilterEntry> _filterEntries = <FilterEntry>[
-    const FilterEntry("Eating out", Icon(Icons.restaurant), "diet:(vegan|vegetarian)"),
+    const FilterEntry(
+        "Eating out", Icon(Icons.restaurant), "diet:(vegan|vegetarian)"),
     const FilterEntry("Zero waste", Icon(Icons.public), "zero_waste"),
     const FilterEntry("Refills", Icon(Icons.backpack), "bulk_purchase"),
     const FilterEntry("Organic", Icon(Icons.emoji_nature), "organic"),
   ];
 
+  //Position _currentPosition;
+
   @override
   void initState() {
-    super.initState();
     _mapController = MapController();
+    _getCurrentLocation();
+    super.initState();
   }
 
   Future<Map> fetchPoI() async {
@@ -104,7 +112,6 @@ out tags qt center;
 //      }
 //    });
 
-
     RegExp re = new RegExp(_filters.join("|"));
 
     unfilteredPoIs.where((PoI) => re.hasMatch(PoI["tags"].keys.toString()));
@@ -158,6 +165,24 @@ out tags qt center;
     }
   }
 
+  Future<void> _getCurrentLocation() async {
+    await Geolocator()
+        .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
+        .then((Position _position) {
+      if (_position != null) {
+        setState(() {
+          pos = LatLng(_position.latitude, _position.longitude);
+        });
+      }
+      print("${_position.latitude}, ${_position.longitude}");
+
+      //return new LatLng(position.latitude, position.longitude);
+      //return position;
+    }).catchError((e) {
+      print(e);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -174,7 +199,8 @@ out tags qt center;
                   options: new MapOptions(
                     center: savedPosition != null
                         ? savedPosition
-                        : LatLng(51.5, -0.09),
+                        : new LatLng(pos.latitude, pos.longitude),
+                    //  : (pos != null ? new LatLng(pos.latitude, pos.longitude) : new LatLng(50, 50)),
                     onPositionChanged: (mapPosition, boolValue) {
                       savedPosition = mapPosition.center;
                       savedZoom = mapPosition.zoom;
