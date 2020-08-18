@@ -1,9 +1,7 @@
-
-
 import 'package:flutter/material.dart';
 
 import 'mappage.dart';
-import 'tippage.dart' ;
+import 'tippage.dart';
 
 void main() => runApp(MyApp());
 
@@ -14,12 +12,15 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.lightGreen,
+<<<<<<< HEAD
           primaryTextTheme: TextTheme(
         headline6: TextStyle(
           color: Colors.white,
           )
           )
 //
+=======
+>>>>>>> origin/master
       ),
       home: MyHomePage(title: 'The Good Map'),
     );
@@ -36,7 +37,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   static List<Widget> _myPages = <Widget>[PageOne(), PageTwo()];
 
   int _selectedIndex = 0;
@@ -70,11 +70,11 @@ class _MyHomePageState extends State<MyHomePage> {
             title: Text(
               'Tips',
             ),
-          )],
+          )
+        ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
     );
   }
 }
-

@@ -14,7 +14,6 @@ class PageOne extends StatelessWidget {
     debugShowCheckedModeBanner: false,
       //title: 'The Good Map',
       theme: ThemeData(
-
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: MyHomePage(),
@@ -25,16 +24,13 @@ class PageOne extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
 
-
-
   final String title;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState
-    extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   int _counter = 0;
@@ -63,14 +59,12 @@ class _MyHomePageState
 );
 out tags qt center;
 """;
-    
+
     final response = await http.post(api_url, body: {"data": queryString});
 
     if (response.statusCode == 200) {
-
       return json.decode(response.body);
     } else {
-
       throw Exception('Failed to load PoI');
     }
   }
@@ -89,9 +83,12 @@ out tags qt center;
       builder: (ctx) => new Container(
         child: GestureDetector(
           onTap: () {
-            _scaffoldKey.currentState.showSnackBar(SnackBar(
-              content: Text(tags["name"]),
-            ));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailTable(tags: tags),
+              ),
+            );
           },
           child: new Icon(
             Icons.place,
@@ -123,20 +120,15 @@ out tags qt center;
     print("pain");
   }
 
-  List<Marker> _markers = <Marker>[
-
-  ];
+  List<Marker> _markers = <Marker>[];
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       key: _scaffoldKey,
 
       body: Center(
-
         child: Column(
-
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Flexible(
@@ -175,7 +167,11 @@ out tags qt center;
                       return FloatingActionButton(
                         child: Text(markers.length.toString()),
                         onPressed: null,
+<<<<<<< HEAD
                         backgroundColor: Colors.lightGreen,
+=======
+                        heroTag: null,
+>>>>>>> origin/master
                       );
                     },
                   ),
@@ -193,14 +189,69 @@ out tags qt center;
        // alignment: Alignment.bottomRight,
       ),
       //floatingActionButton1: FloatingActionButton(
+<<<<<<< HEAD
         //onPressed: () {
       //
       // },
         //tooltip: 'Add to map',
         //child: Icon(Icons.add),
+=======
+      //onPressed: null,
+      //tooltip: 'Add to map',
+      //child: Icon(Icons.add),
+>>>>>>> origin/master
       //backgroundColor: Colors.lightGreen,
       //alignment: Alignment.bottomLeft
       //)// This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class DetailTable extends StatelessWidget {
+  final Map tags;
+
+  DetailTable({Key key, @required this.tags}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    List<DataRow> _dataRows = [];
+
+    tags.forEach((key, value) {
+      _dataRows.add(new DataRow(cells: <DataCell>[
+        new DataCell(Text(key)),
+        new DataCell(Text(value)),
+      ]));
+    });
+
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(tags["name"]),
+        ),
+        body: SingleChildScrollView(
+            padding: EdgeInsets.all(0),
+            child: Container(
+              child: Column(
+                children: [
+                  DataTable(
+                    dataRowHeight: 35,
+                    columns: const <DataColumn>[
+                      DataColumn(
+                        label: Text(
+                          'Key',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Value',
+                          style: TextStyle(fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ],
+                    rows: _dataRows,
+                  ),
+                ],
+              ),
+            )));
   }
 }
