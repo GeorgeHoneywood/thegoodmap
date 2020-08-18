@@ -5,25 +5,27 @@ class TipPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Card(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Icon(
-                Icons.thumb_up,
-                size: 50.0,
+    return Padding(
+        padding: EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Card(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Icon(
+                    Icons.thumb_up,
+                    size: 50.0,
+                  ),
+                  Text(
+                    'Lorem tipsum',
+                    style: TextStyle(fontSize: 50.0),
+                  ),
+                ],
               ),
-              Text(
-                'Tips Page',
-                style: TextStyle(fontSize: 50.0),
-              ),
-            ],
-          ),
-        )
-      ],
-    );
+            )
+          ],
+        ));
   }
 }
