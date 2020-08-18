@@ -25,6 +25,14 @@ class _MapPageState extends State<MapPage> {
 
   Future<Map> futurePoI;
   List<Marker> _markers = <Marker>[];
+  List _unfilteredPoIs = [];
+  List<String> _filters = <String>[];
+  final List<FilterEntry> _filterEntries = <FilterEntry>[
+    const FilterEntry("Eating out", Icon(Icons.restaurant), "diet:(vegan|vegetarian)"),
+    const FilterEntry("Zero waste", Icon(Icons.public), "zero_waste"),
+    const FilterEntry("Refills", Icon(Icons.backpack), "bulk_purchase"),
+    const FilterEntry("Organic", Icon(Icons.emoji_nature), "organic"),
+  ];
 
   @override
   void initState() {
@@ -59,7 +67,7 @@ out tags qt center;
   void loadPoI() {
     futurePoI = fetchPoI();
     futurePoI
-        .then((value) => handlePoI(value))
+        .then((PoIs) => _unfilteredPoIs = PoIs["elements"])
         .catchError((error) => handleError(error));
   }
 
@@ -87,25 +95,28 @@ out tags qt center;
     );
   }
 
-  List filterPoIs(List PoIs) {
+  List filterPoIs(List unfilteredPoIs) {
     List filteredPoIs = new List();
 
-    PoIs.forEach((PoI) {
-      if (PoI["tags"].containsKey("diet:vegan")) {
-        filteredPoIs.add(PoI);
-      }
-    });
+//    PoIs.forEach((PoI) {
+//      if (PoI["tags"].containsKey("diet:vegan")) {
+//        filteredPoIs.add(PoI);
+//      }
+//    });
 
-    return filteredPoIs;
+
+    RegExp re = new RegExp(_filters.join("|"));
+
+    unfilteredPoIs.where((PoI) => re.hasMatch(PoI["tags"].keys.toString()));
+
+    return unfilteredPoIs;
   }
 
-  void handlePoI(PoIs) {
-    PoIs = PoIs["elements"];
-
-    PoIs = filterPoIs(PoIs);
+  void handlePoI() {
+    List filteredPoIs = filterPoIs(_unfilteredPoIs);
 
     setState(() {
-      PoIs.forEach((PoI) {
+      filteredPoIs.forEach((PoI) {
         if (PoI["type"] == "node") {
           _markers.add(createMarker(PoI["lat"], PoI["lon"], PoI["tags"]));
         } else {
@@ -120,6 +131,31 @@ out tags qt center;
 
   void handleError(error) {
     print(error);
+  }
+
+  Iterable<Widget> get filterWidgets sync* {
+    for (final FilterEntry _filter in _filterEntries) {
+      yield Padding(
+        padding: const EdgeInsets.only(left: 4.0),
+        child: FilterChip(
+          avatar: CircleAvatar(child: _filter.icon),
+          label: Text(_filter.name),
+          selected: _filters.contains(_filter.string),
+          onSelected: (bool value) {
+            setState(() {
+              if (value) {
+                _filters.add(_filter.string);
+              } else {
+                _filters.removeWhere((String string) {
+                  return string == _filter.string;
+                });
+              }
+              handlePoI();
+            });
+          },
+        ),
+      );
+    }
   }
 
   @override
@@ -182,7 +218,14 @@ out tags qt center;
                     ),
                   ],
                 ),
-                Text("test text")
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                  child: Wrap(
+                    spacing: 8.0, // gap between adjacent chips
+                    runSpacing: -4.0, // gap between lines
+                    children: filterWidgets.toList(),
+                  ),
+                ),
               ])),
             ],
           ),
@@ -196,7 +239,7 @@ out tags qt center;
               FloatingActionButton(
                   onPressed: () {},
                   tooltip: 'Add To Map',
-                  child: Icon(Icons.add, color: Colors.white),
+                  child: Icon(Icons.add_business, color: Colors.white),
                   backgroundColor: Colors.lightGreen,
                   heroTag: null),
               FloatingActionButton(
@@ -209,9 +252,16 @@ out tags qt center;
             ],
           ),
         ) //
-
         );
   }
+}
+
+class FilterEntry {
+  final String name;
+  final Icon icon;
+  final String string;
+
+  const FilterEntry(this.name, this.icon, this.string);
 }
 
 class DetailTable extends StatelessWidget {
