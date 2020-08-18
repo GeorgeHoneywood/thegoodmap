@@ -11,7 +11,7 @@ class PageOne extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-    debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,
       //title: 'The Good Map',
       theme: ThemeData(
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -167,11 +167,8 @@ out tags qt center;
                       return FloatingActionButton(
                         child: Text(markers.length.toString()),
                         onPressed: null,
-<<<<<<< HEAD
                         backgroundColor: Colors.lightGreen,
-=======
                         heroTag: null,
->>>>>>> origin/master
                       );
                     },
                   ),
@@ -186,20 +183,17 @@ out tags qt center;
         tooltip: 'Load Points of Interest',
         child: Icon(Icons.search),
         backgroundColor: Colors.lightGreen,
-       // alignment: Alignment.bottomRight,
+        // alignment: Alignment.bottomRight,
       ),
       //floatingActionButton1: FloatingActionButton(
-<<<<<<< HEAD
-        //onPressed: () {
+      //onPressed: () {
       //
       // },
-        //tooltip: 'Add to map',
-        //child: Icon(Icons.add),
-=======
+      //tooltip: 'Add to map',
+      //child: Icon(Icons.add),
       //onPressed: null,
       //tooltip: 'Add to map',
       //child: Icon(Icons.add),
->>>>>>> origin/master
       //backgroundColor: Colors.lightGreen,
       //alignment: Alignment.bottomLeft
       //)// This trailing comma makes auto-formatting nicer for build methods.

@@ -11,17 +11,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.lightGreen,
-<<<<<<< HEAD
+          primarySwatch: Colors.lightGreen,
           primaryTextTheme: TextTheme(
-        headline6: TextStyle(
-          color: Colors.white,
-          )
-          )
-//
-=======
->>>>>>> origin/master
-      ),
+              headline6: TextStyle(
+            color: Colors.white,
+          ))),
       home: MyHomePage(title: 'The Good Map'),
     );
   }
