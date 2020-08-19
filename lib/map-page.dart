@@ -232,13 +232,11 @@ out tags qt center;
                         subdomains: ['a', 'b', 'c']),
                     new MarkerLayerOptions(markers: <Marker>[
                       Marker(
-                        width: 80.0,
-                        height: 80.0,
-                        anchorPos: AnchorPos.align(AnchorAlign.top), // this is brokem
+                        anchorPos: AnchorPos.align(AnchorAlign.center), // this is brokem
                         point: LatLng(pos.latitude, pos.longitude), // put users current location in here https://pub.dev/packages/geolocator
                         builder: (ctx) => Container(
                           child: new Icon(
-                            Icons.place,
+                            Icons.my_location,
                             color: Colors.blue,
                             size: 36.0,
                           ),
