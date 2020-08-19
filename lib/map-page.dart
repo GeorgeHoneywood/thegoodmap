@@ -88,11 +88,41 @@ out tags qt center;
       builder: (ctx) => new Container(
         child: GestureDetector(
           onTap: () {
-            Navigator.push(
-              ctx,
-              MaterialPageRoute(
-                builder: (ctx) => DetailTable(tags: tags),
-              ),
+            showModalBottomSheet(
+              context: ctx,
+              builder: (BuildContext bc) {
+                String addressString = "";
+                tags["addr:housenumber"] != null
+                    ? addressString += tags["addr:housenumber"] + ", "
+                    : addressString += "?" + ", ";
+                tags["addr:street"] != null
+                    ? addressString += tags["addr:street"] + ", "
+                    : addressString += "?" + ", ";
+                tags["addr:postcode"] != null
+                    ? addressString += tags["addr:postcode"]
+                    : addressString += "?";
+
+                return Container(
+                    child: new Wrap(children: <Widget>[
+                  Card(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        ListTile(
+                          leading: Icon(Icons.domain),
+                          title: Text(tags["name"]),
+                          subtitle: Text(addressString),
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.airline_seat_flat_angled),
+                          title: Text("type of establishment"),
+                          subtitle: Text("hello there"),
+                        ),
+                      ],
+                    ),
+                  )
+                ]));
+              },
             );
           },
           child: new Icon(
@@ -232,8 +262,10 @@ out tags qt center;
                         subdomains: ['a', 'b', 'c']),
                     new MarkerLayerOptions(markers: <Marker>[
                       Marker(
-                        anchorPos: AnchorPos.align(AnchorAlign.center), // this is brokem
-                        point: LatLng(pos.latitude, pos.longitude), // put users current location in here https://pub.dev/packages/geolocator
+                        anchorPos: AnchorPos.align(
+                            AnchorAlign.center), // this is brokem
+                        point: LatLng(pos.latitude,
+                            pos.longitude), // put users current location in here https://pub.dev/packages/geolocator
                         builder: (ctx) => Container(
                           child: new Icon(
                             Icons.my_location,
@@ -312,51 +344,3 @@ class FilterEntry {
   const FilterEntry(this.name, this.icon, this.string);
 }
 
-class DetailTable extends StatelessWidget {
-  final Map tags;
-
-  DetailTable({Key key, @required this.tags}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    List<DataRow> _dataRows = [];
-
-    tags.forEach((key, value) {
-      _dataRows.add(new DataRow(cells: <DataCell>[
-        new DataCell(Text(key)),
-        new DataCell(Text(value)),
-      ]));
-    });
-
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(tags["name"]),
-        ),
-        body: SingleChildScrollView(
-            padding: EdgeInsets.all(0),
-            child: Container(
-              child: Column(
-                children: [
-                  DataTable(
-                    dataRowHeight: 35,
-                    columns: const <DataColumn>[
-                      DataColumn(
-                        label: Text(
-                          'Key',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                      DataColumn(
-                        label: Text(
-                          'Value',
-                          style: TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                    ],
-                    rows: _dataRows,
-                  ),
-                ],
-              ),
-            )));
-  }
-}
