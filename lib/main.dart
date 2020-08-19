@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'mappage.dart';
-import 'tippage.dart';
+import 'map-page.dart';
+import 'tip-page.dart';
 
 void main() => runApp(MyApp());
 

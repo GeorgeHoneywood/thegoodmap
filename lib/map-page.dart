@@ -115,7 +115,9 @@ out tags qt center;
 
     RegExp re = new RegExp(_filters.join("|"));
 
-    filteredPoIs = unfilteredPoIs.where((PoI) => re.hasMatch(PoI["tags"].keys.join(" "))).toList();
+    filteredPoIs = unfilteredPoIs
+        .where((PoI) => re.hasMatch(PoI["tags"].keys.join(" ")))
+        .toList();
 
     return filteredPoIs;
   }
@@ -124,7 +126,8 @@ out tags qt center;
     List filteredPoIs = filterPoIs(_unfilteredPoIs);
 
     setState(() {
-      _markers.clear(); markers.clear();
+      _markers.clear();
+      markers.clear();
 
       filteredPoIs.forEach((PoI) {
         //if (!_markers.contains(PoI)) { // would be better but idc
@@ -226,7 +229,18 @@ out tags qt center;
                         urlTemplate:
                             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                         subdomains: ['a', 'b', 'c']),
-                    // new MarkerLayerOptions(markers: _markers), // before i used the cluster thingy
+                    new MarkerLayerOptions(markers: <Marker>[
+                      Marker(
+                        width: 80.0,
+                        height: 80.0,
+                        point: LatLng(51.432034, -0.547567), // put users current location in here https://pub.dev/packages/geolocator
+                        builder: (ctx) => Container(
+                          child: FlutterLogo(
+                            key: ObjectKey(Colors.blue),
+                          ),
+                        ),
+                      )
+                    ]),
                     MarkerClusterLayerOptions(
                       maxClusterRadius: 120,
                       size: Size(40, 40),
