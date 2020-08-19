@@ -1,16 +1,24 @@
-# flutter_map_test
+# thegoodmap
 
-A new Flutter application.
+An app to help the environmentally concious find their way.
 
-## Getting Started
+## Basics
 
-This project is a starting point for a Flutter application.
+This project aims to provide a simple way for you to make your lifestyle more planet friendly, via a map enabling you to find environmentally friendly buisnesses near you (powered by OpenStreetMap data), and a tips page that provides a number of simple ways to lessen your impact.
 
-A few resources to get you started if this is your first Flutter project:
+### Map
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+The map currently displays a number of different buisnesses
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+* Restaurants that serve vegetarian or vegan food
+* Shops that allow you to refill your own containers
+* Shops that revolve around selling organic food
+* Buisnesses that attempt to be zero waste
+
+#### Giving back
+
+You can also add or edit buisnesses near you, so that other users of the app will be able to find them too -- alongside anyone else that uses OpenStreetMap.
+
+## Contributing
+
+If you have any experience with Flutter and fancy giving a helping hand, we are open to PRs.
