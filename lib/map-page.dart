@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -233,10 +234,13 @@ out tags qt center;
                       Marker(
                         width: 80.0,
                         height: 80.0,
-                        point: LatLng(51.432034, -0.547567), // put users current location in here https://pub.dev/packages/geolocator
+                        anchorPos: AnchorPos.align(AnchorAlign.top), // this is brokem
+                        point: LatLng(pos.latitude, pos.longitude), // put users current location in here https://pub.dev/packages/geolocator
                         builder: (ctx) => Container(
-                          child: FlutterLogo(
-                            key: ObjectKey(Colors.blue),
+                          child: new Icon(
+                            Icons.place,
+                            color: Colors.blue,
+                            size: 36.0,
                           ),
                         ),
                       )
