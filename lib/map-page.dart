@@ -28,14 +28,15 @@ class _MapPageState extends State<MapPage> {
   MapController _mapController;
   LatLng currentPosition;
 
-  Future<Map> futurePoI;
+  Future<OverpassResponse> futureOverpassResponse;
+  OverpassResponse overpassResponse;
+
   List<Marker> _markers = <Marker>[];
-  List _unfilteredPoIs = [];
 
   List<String> _filters = <String>[];
   final List<FilterEntry> _filterEntries = <FilterEntry>[
-    const FilterEntry(
-        "Eating out", Icon(Icons.restaurant), "diet:(vegan|vegetarian)"),
+    const FilterEntry("Vegan", Icon(Icons.grass), "diet:vegan"),
+    const FilterEntry("Vegetarian", Icon(Icons.eco), "diet:vegetarian)"),
     const FilterEntry("Zero waste", Icon(Icons.public), "zero_waste"),
     const FilterEntry("Refills", Icon(Icons.backpack), "bulk_purchase"),
     const FilterEntry("Organic", Icon(Icons.emoji_nature), "organic"),
@@ -48,7 +49,7 @@ class _MapPageState extends State<MapPage> {
     super.initState();
   }
 
-  Future<Map> fetchPoI() async {
+  Future<OverpassResponse> loadFutureResponse() async {
     const api_url = "https://overpass-api.de/api/interpreter";
 
     final bounds = _mapController.bounds;
@@ -67,21 +68,22 @@ out tags qt center;
         body: {"data": queryString}, encoding: Utf8Codec());
 
     if (response.statusCode == 200) {
-      return json.decode(utf8.decode(response.body.runes.toList()));
+      return OverpassResponse.fromJson(
+          json.decode(utf8.decode(response.body.runes.toList())));
     } else {
       throw Exception('Failed to load PoI');
     }
   }
 
-  void loadPoI() {
-    futurePoI = fetchPoI();
-    futurePoI.then((PoIs) {
-      _unfilteredPoIs = PoIs["elements"];
-      handlePoI();
-    }).catchError((error) => handleError(error));
+  void loadResponse() {
+    futureOverpassResponse = loadFutureResponse();
+    futureOverpassResponse.then((_overpassResponse) {
+      overpassResponse = _overpassResponse;
+      handleResponse();
+    }).catchError((error) => print(error));
   }
 
-  Marker createMarker(double lat, double lon, Map<String, dynamic> tags) {
+  Marker createMarker(double lat, double lon, Tags tags) {
     return Marker(
       point: new LatLng(lat, lon),
       anchorPos: AnchorPos.align(AnchorAlign.top),
@@ -92,15 +94,9 @@ out tags qt center;
               context: ctx,
               builder: (BuildContext bc) {
                 String addressString = "";
-                tags["addr:housenumber"] != null
-                    ? addressString += tags["addr:housenumber"] + ", "
-                    : addressString += "?" + ", ";
-                tags["addr:street"] != null
-                    ? addressString += tags["addr:street"] + ", "
-                    : addressString += "?" + ", ";
-                tags["addr:postcode"] != null
-                    ? addressString += tags["addr:postcode"]
-                    : addressString += "?";
+                addressString += tags.addrHousenumber + ", " ?? "?" + ", ";
+                addressString += tags.addrStreet + ", " ?? "?" + ", ";
+                addressString += tags.addrPostcode ?? "?";
 
                 return Container(
                     child: new Wrap(children: <Widget>[
@@ -110,7 +106,7 @@ out tags qt center;
                       children: <Widget>[
                         ListTile(
                           leading: Icon(Icons.domain),
-                          title: Text(tags["name"]),
+                          title: Text(tags.name),
                           subtitle: Text(addressString),
                         ),
                         ListTile(
@@ -135,49 +131,43 @@ out tags qt center;
     );
   }
 
-  List filterPoIs(List unfilteredPoIs) {
-    List filteredPoIs = new List();
+//  List filterPoIs(List unfilteredPoIs) {
+//    List filteredPoIs = new List();
+//
+//    RegExp re = new RegExp(_filters.join("|"));
+//
+//    filteredPoIs = unfilteredPoIs
+//        .where((PoI) => re.hasMatch(PoI["tags"].keys.join(" ")))
+//        .toList();
+//
+//    return filteredPoIs;
+//  }
 
-//    PoIs.forEach((PoI) {
-//      if (PoI["tags"].containsKey("diet:vegan")) {
-//        filteredPoIs.add(PoI);
-//      }
-//    });
+  void handleResponse() {
+    if (overpassResponse == null){
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("Please load data before attempting to filter it"),
+      ));
+      return;
+    }
 
-    RegExp re = new RegExp(_filters.join("|"));
-
-    filteredPoIs = unfilteredPoIs
-        .where((PoI) => re.hasMatch(PoI["tags"].keys.join(" ")))
-        .toList();
-
-    return filteredPoIs;
-  }
-
-  void handlePoI() {
-    List filteredPoIs = filterPoIs(_unfilteredPoIs);
+    List<OsmElement> filteredElements =
+        overpassResponse.filterElements(_filters);
 
     setState(() {
       _markers.clear();
       markers.clear();
 
-      filteredPoIs.forEach((PoI) {
+      filteredElements.forEach((element) {
         //if (!_markers.contains(PoI)) { // would be better but idc
 
-        if (PoI["type"] == "node") {
-          _markers.add(createMarker(PoI["lat"], PoI["lon"], PoI["tags"]));
-        } else {
-          _markers.add(createMarker(
-              PoI["center"]["lat"], PoI["center"]["lon"], PoI["tags"]));
-        }
+        _markers.add(createMarker(element.lat, element.lon, element.tags));
+
         //}
         _markers = List.from(_markers);
         markers = List.from(_markers);
       });
     });
-  }
-
-  void handleError(error) {
-    print(error);
   }
 
   Iterable<Widget> get filterWidgets sync* {
@@ -197,7 +187,7 @@ out tags qt center;
                   return string == _filter.string;
                 });
               }
-              handlePoI();
+              handleResponse();
             });
           },
         ),
@@ -327,7 +317,7 @@ out tags qt center;
                   backgroundColor: Colors.lightGreen,
                   heroTag: null),
               FloatingActionButton(
-                onPressed: loadPoI,
+                onPressed: loadResponse,
                 tooltip: 'Load Points of Interest',
                 child: Icon(Icons.search, color: Colors.white),
                 backgroundColor: Colors.lightGreen,

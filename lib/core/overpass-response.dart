@@ -1,7 +1,8 @@
 class OverpassResponse {
   double version;
   String generator;
-  List<Elements> elements;
+  List<OsmElement> elements;
+  List<OsmElement> filteredElements;
 
   OverpassResponse({this.version, this.generator, this.elements});
 
@@ -9,24 +10,29 @@ class OverpassResponse {
     version = json['version'];
     generator = json['generator'];
     if (json['elements'] != null) {
-      elements = new List<Elements>();
+      elements = new List<OsmElement>();
       json['elements'].forEach((v) {
-        elements.add(new Elements.fromJson(v));
+        elements.add(new OsmElement.fromJson(v));
       });
     }
   }
+  
+  List<OsmElement> filterElements(List filterList){
+    return <OsmElement>[];
+  }
 }
 
-class Elements {
+class OsmElement {
   String type;
   int id;
   double lat;
   double lon;
   Tags tags;
+  Details details;
 
-  Elements({this.type, this.id, this.lat, this.lon, this.tags});
+  OsmElement({this.type, this.id, this.lat, this.lon, this.tags});
 
-  Elements.fromJson(Map<String, dynamic> json) {
+  OsmElement.fromJson(Map<String, dynamic> json) {
     type = json['type'];
     id = json['id'];
 
@@ -70,8 +76,8 @@ class Tags {
       this.name,
       this.openingHours,
       this.dietVegetarian,
+      this.organic,
       this.takeaway,
-        this.organic,
       this.zeroWaste,
       this.bulkPurchase});
 
@@ -92,4 +98,8 @@ class Tags {
     zeroWaste = json['zero_waste'];
     bulkPurchase = json['bulk_purchase'];
   }
+}
+
+class Details {
+  String completeAddress;
 }
