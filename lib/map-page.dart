@@ -8,6 +8,8 @@ import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
+import 'core/overpass-response.dart';
+
 List<Marker> markers = [];
 LatLng savedPosition;
 double savedZoom;
@@ -23,14 +25,13 @@ class MapPage extends StatefulWidget {
 class _MapPageState extends State<MapPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  static LatLng pos;
-
   MapController _mapController;
+  LatLng currentPosition;
 
   Future<Map> futurePoI;
   List<Marker> _markers = <Marker>[];
-
   List _unfilteredPoIs = [];
+
   List<String> _filters = <String>[];
   final List<FilterEntry> _filterEntries = <FilterEntry>[
     const FilterEntry(
@@ -39,8 +40,6 @@ class _MapPageState extends State<MapPage> {
     const FilterEntry("Refills", Icon(Icons.backpack), "bulk_purchase"),
     const FilterEntry("Organic", Icon(Icons.emoji_nature), "organic"),
   ];
-
-  //Position _currentPosition;
 
   @override
   void initState() {
@@ -64,10 +63,11 @@ class _MapPageState extends State<MapPage> {
 out tags qt center;
 """;
 
-    final response = await http.post(api_url, body: {"data": queryString});
+    final response = await http.post(api_url,
+        body: {"data": queryString}, encoding: Utf8Codec());
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      return json.decode(utf8.decode(response.body.runes.toList()));
     } else {
       throw Exception('Failed to load PoI');
     }
@@ -208,16 +208,13 @@ out tags qt center;
   Future<void> _getCurrentLocation() async {
     await Geolocator()
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
-        .then((Position _position) {
-      if (_position != null) {
+        .then((Position _currentPosition) {
+      if (_currentPosition != null) {
         setState(() {
-          pos = LatLng(_position.latitude, _position.longitude);
+          currentPosition =
+              LatLng(_currentPosition.latitude, _currentPosition.longitude);
         });
       }
-      print("${_position.latitude}, ${_position.longitude}");
-
-      //return new LatLng(position.latitude, position.longitude);
-      //return position;
     }).catchError((e) {
       print(e);
     });
@@ -225,6 +222,16 @@ out tags qt center;
 
   @override
   Widget build(BuildContext context) {
+    LatLng _currentPosition;
+
+    if (currentPosition != null) {
+      _currentPosition =
+          LatLng(currentPosition.latitude, currentPosition.longitude);
+      _mapController.move(_currentPosition, _mapController.zoom);
+    } else {
+      _currentPosition = LatLng(0, 0);
+    }
+
     return Scaffold(
         key: _scaffoldKey,
         body: Center(
@@ -239,8 +246,7 @@ out tags qt center;
                   options: new MapOptions(
                     center: savedPosition != null
                         ? savedPosition
-                        : new LatLng(pos.latitude, pos.longitude),
-                    //  : (pos != null ? new LatLng(pos.latitude, pos.longitude) : new LatLng(50, 50)),
+                        : _currentPosition,
                     onPositionChanged: (mapPosition, boolValue) {
                       savedPosition = mapPosition.center;
                       savedZoom = mapPosition.zoom;
@@ -262,10 +268,8 @@ out tags qt center;
                         subdomains: ['a', 'b', 'c']),
                     new MarkerLayerOptions(markers: <Marker>[
                       Marker(
-                        anchorPos: AnchorPos.align(
-                            AnchorAlign.center), // this is brokem
-                        point: LatLng(pos.latitude,
-                            pos.longitude), // put users current location in here https://pub.dev/packages/geolocator
+                        anchorPos: AnchorPos.align(AnchorAlign.center),
+                        point: _currentPosition,
                         builder: (ctx) => Container(
                           child: new Icon(
                             Icons.my_location,
@@ -343,4 +347,3 @@ class FilterEntry {
 
   const FilterEntry(this.name, this.icon, this.string);
 }
-
