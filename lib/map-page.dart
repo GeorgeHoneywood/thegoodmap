@@ -14,6 +14,7 @@ List<Marker> markers = [];
 LatLng savedPosition;
 double savedZoom;
 MapController mapController;
+bool firstBuild = true;
 
 class MapPage extends StatefulWidget {
   MapPage({Key key}) : super(key: key);
@@ -94,8 +95,8 @@ out tags qt center;
               context: ctx,
               builder: (BuildContext bc) {
                 String addressString = "";
-                addressString += tags.addrHousenumber + ", " ?? "?" + ", ";
-                addressString += tags.addrStreet + ", " ?? "?" + ", ";
+                addressString += (tags.addrHousenumber ?? "?") + ", ";
+                addressString += (tags.addrStreet ?? "?") + ", ";
                 addressString += tags.addrPostcode ?? "?";
 
                 return Container(
@@ -147,12 +148,28 @@ out tags qt center;
     if (overpassResponse == null){
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text("Please load data before attempting to filter it"),
+        duration: Duration(seconds: 2),
+      ));
+      return;
+    }
+    if (overpassResponse.elements.isEmpty){
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("This area has no data, but you can expand your search"),
+        duration: Duration(seconds: 2),
       ));
       return;
     }
 
     List<OsmElement> filteredElements =
         overpassResponse.filterElements(_filters);
+
+    if (filteredElements.isEmpty){
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("None match this filter"),
+        duration: Duration(seconds: 2),
+      ));
+      return;
+    }
 
     setState(() {
       _markers.clear();
@@ -214,7 +231,8 @@ out tags qt center;
   Widget build(BuildContext context) {
     LatLng _currentPosition;
 
-    if (currentPosition != null) {
+    if (currentPosition != null && firstBuild == true) {
+      firstBuild = false;
       _currentPosition =
           LatLng(currentPosition.latitude, currentPosition.longitude);
       _mapController.move(_currentPosition, _mapController.zoom);

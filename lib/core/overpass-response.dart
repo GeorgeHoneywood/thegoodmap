@@ -2,7 +2,7 @@ class OverpassResponse {
   double version;
   String generator;
   List<OsmElement> elements;
-  List<OsmElement> filteredElements;
+  List<OsmElement> filteredElements = [];
 
   OverpassResponse({this.version, this.generator, this.elements});
 
@@ -16,9 +16,39 @@ class OverpassResponse {
       });
     }
   }
-  
-  List<OsmElement> filterElements(List filterList){
-    return <OsmElement>[];
+
+  List<OsmElement> filterElements(List filterList) {
+    if (filterList.isEmpty){
+      return elements;
+    }
+
+    elements.forEach((element) {
+      filterList.forEach((filter) {
+        if (filter == "diet:vegan") {
+          if (element.tags.dietVegan != null) {
+            filteredElements.add(element);
+          }
+        } else if (filter == "diet:vegetarian") {
+          if (element.tags.dietVegetarian != null) {
+            filteredElements.add(element);
+          }
+        } else if (filter == "zero_waste") {
+          if (element.tags.zeroWaste != null) {
+            filteredElements.add(element);
+          }
+        } else if (filter == "bulk_purchase") {
+          if (element.tags.bulkPurchase != null) {
+            filteredElements.add(element);
+          }
+        } else if (filter == "organic") {
+          if (element.tags.organic != null) {
+            filteredElements.add(element);
+          }
+        }
+      });
+    });
+
+    return filteredElements;
   }
 }
 
@@ -41,7 +71,7 @@ class OsmElement {
       lon = json['lon'];
     } else {
       lat = json['center']["lat"];
-      lat = json['center']["lon"];
+      lon = json['center']["lon"];
     }
     tags = json['tags'] != null ? new Tags.fromJson(json['tags']) : null;
   }
