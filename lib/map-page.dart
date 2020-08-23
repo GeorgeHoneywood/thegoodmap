@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -41,6 +42,8 @@ class _MapPageState extends State<MapPage> {
   ];
 
   //Position _currentPosition;
+  var changesetId;
+  bool addClicked = false;
 
   @override
   void initState() {
@@ -223,6 +226,46 @@ out tags qt center;
     });
   }
 
+  Future<String> _uploadNode(LatLng latlng) async {
+
+
+
+    final response = await http.put(
+        "https://master.apis.dev.openstreetmap.org/api/0.6/node/create",
+        headers: {
+          "authorization": 'Basic ' +
+              base64Encode(
+                  utf8.encode("thegoodmap:TCbg93UZ9zeAiM6")),
+          "content-type": "text/xml",
+        },
+        body: """
+<osm>
+ <node changeset="$changesetId" lat="${latlng.latitude}" lon="${latlng.longitude}">
+   <tag k="amenity" v="restaurant"/>
+   <tag k="name" v="Bims Big Restaurant"/>
+   <tag k="diet:vegan" v="yes"/>
+   <tag k="diet:vegetarian" v="yes"/>
+   <tag k="zero_waste" v="no"/>
+   <tag k="bulk_purchase" v="no"/>
+   <tag k="organic" v="no"/>
+   <tag k="second_hand" v="no"/>_
+ </node>
+</osm>
+    """ );
+    return response.body;
+  }
+
+  _handletap(LatLng latlng){
+    if (addClicked == false){
+      return;
+    }
+
+    var futureUploadNode = _uploadNode(latlng);
+    futureUploadNode.then((value) {
+      print(value);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -248,6 +291,7 @@ out tags qt center;
                     zoom: savedZoom != null ? savedZoom : 13.0,
                     maxZoom: 19,
                     minZoom: 0,
+                    onTap: _handletap,
                     plugins: [
                       MarkerClusterPlugin(),
                     ],
@@ -317,7 +361,36 @@ out tags qt center;
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
               FloatingActionButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Future<String> openChangeset() async {
+                      final response = await http.put(
+                          "https://master.apis.dev.openstreetmap.org/api/0.6/changeset/create",
+                          headers: {
+                            "authorization": 'Basic ' +
+                                base64Encode(
+                                    utf8.encode("thegoodmap:TCbg93UZ9zeAiM6")),
+                            "content-type": "text/xml",
+                          },
+                          body: """
+<osm>
+    <changeset>
+    <tag k="created_by" v="The Good Map"/>
+    <tag k="comment" v="Testing"/>
+    </changeset>
+</osm>
+""");
+                      return response.body;
+                    }
+
+                    var futureOpenChangeset = openChangeset();
+
+                    futureOpenChangeset.then((value) {
+                      print(value);
+                      changesetId = value;
+                    });
+
+                    addClicked = true;
+                  },
                   tooltip: 'Add To Map',
                   child: Icon(Icons.add_business, color: Colors.white),
                   backgroundColor: Colors.lightGreen,
@@ -343,4 +416,3 @@ class FilterEntry {
 
   const FilterEntry(this.name, this.icon, this.string);
 }
-
