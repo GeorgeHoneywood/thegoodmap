@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class OverpassResponse {
   double version;
   String generator;
@@ -18,7 +20,9 @@ class OverpassResponse {
   }
 
   List<OsmElement> filterElements(List filterList) {
-    if (filterList.isEmpty){
+    filteredElements.clear();
+
+    if (filterList.isEmpty) {
       return elements;
     }
 
@@ -29,8 +33,11 @@ class OverpassResponse {
             filteredElements.add(element);
           }
         } else if (filter == "diet:vegetarian") {
-          if (element.tags.dietVegetarian != null) {
-            filteredElements.add(element);
+          if (element.tags.dietVegetarian != null ||
+              element.tags.dietVegan != null) {
+            if (!filteredElements.contains(element)) {
+              filteredElements.add(element);
+            }
           }
         } else if (filter == "zero_waste") {
           if (element.tags.zeroWaste != null) {
@@ -74,6 +81,8 @@ class OsmElement {
       lon = json['center']["lon"];
     }
     tags = json['tags'] != null ? new Tags.fromJson(json['tags']) : null;
+
+    details = Details(this.tags);
   }
 }
 
@@ -131,5 +140,107 @@ class Tags {
 }
 
 class Details {
-  String completeAddress;
+  String completeAddress = "";
+  Tags tags;
+  DisplayType displayType;
+  BenefitType benefitType;
+
+  Details(Tags tags) {
+    this.tags = tags;
+
+    buildAddress();
+    buildDisplayType();
+    buildBenefitType();
+  }
+
+  void buildAddress() {
+    completeAddress =
+        "${tags.addrHousenumber ?? "?"}, ${tags.addrStreet ?? "?"}, ${tags.addrPostcode ?? "?"}";
+
+    if (completeAddress == "?, ?, ?") {
+      completeAddress = "Address unknown";
+    }
+  }
+
+  void buildDisplayType() {
+    String cuisine = tags.cuisine;
+    String amenity = tags.amenity;
+
+    if (cuisine == null) {
+      cuisine = "Cuisine unknown";
+    }
+
+    if (amenity == null) {
+      amenity = "Location type unknown";
+    }
+
+    cuisine = formatList(splitOnSemi(cuisine));
+
+    if (amenity == "pub") {
+      displayType = DisplayType("Pub", cuisine, Icons.local_drink);
+    } else if (amenity == "restaurant") {
+      displayType = DisplayType("Restaurant", cuisine, Icons.restaurant);
+    } else if (amenity == "cafe") {
+      displayType = DisplayType("Cafe", cuisine, Icons.local_cafe);
+    } else {
+      amenity = formatList(splitOnSemi(amenity));
+
+      displayType =
+          DisplayType(amenity, cuisine, Icons.place);
+    }
+  }
+
+  void buildBenefitType(){
+    if (tags.dietVegan != null) {
+      benefitType = BenefitType("Vegan", "Sells products that are vegan", Icons.grass);
+    } else if (tags.dietVegetarian != null) {
+      benefitType = BenefitType("Vegetarian", "Sells products that are vegetarian", Icons.eco);
+    } else if (tags.zeroWaste != null) {
+      benefitType = BenefitType("Zero waste", "Sells eco products", Icons.public);
+    } else if (tags.bulkPurchase != null) {
+      benefitType = BenefitType("Bulk shop", "Sells products without packaging -- you have to bring your own", Icons.backpack);
+    } else if (tags.organic != null) {
+      benefitType = BenefitType("Organic", "Sells products that are organic", Icons.emoji_nature);
+    }
+  }
+
+  List<String> splitOnSemi(String string) {
+    return string.split(";");
+  }
+
+  String capitaliseFirst(String string) {
+    return string[0].toUpperCase() + string.substring(1);
+  }
+
+  String formatList(List<String> list) {
+    list = list.map((element) {
+      return capitaliseFirst(element).replaceAll("_", " ");
+    }).toList();
+
+    return list.join(", ");
+  }
+}
+
+class DisplayType {
+  Text title;
+  Text cuisine;
+  Icon icon;
+
+  DisplayType(title, cuisine, icon) {
+    this.title = Text(title);
+    this.cuisine = Text(cuisine);
+    this.icon = Icon(icon);
+  }
+}
+
+class BenefitType {
+  Text title;
+  Text subtitle;
+  Icon icon;
+
+  BenefitType(title, cuisine, icon) {
+    this.title = Text(title);
+    this.subtitle = Text(cuisine);
+    this.icon = Icon(icon);
+  }
 }

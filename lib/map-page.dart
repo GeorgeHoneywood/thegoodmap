@@ -11,8 +11,10 @@ import 'package:geolocator/geolocator.dart';
 import 'core/overpass-response.dart';
 
 List<Marker> markers = [];
-LatLng savedPosition;
-double savedZoom;
+Marker userLocationMarker;
+LatLng savedMapPosition;
+LatLng savedUserPosition;
+double savedMapZoom;
 MapController mapController;
 bool firstBuild = true;
 
@@ -27,17 +29,18 @@ class _MapPageState extends State<MapPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MapController _mapController;
-  LatLng currentPosition;
+  LatLng _currentUserPosition;
 
   Future<OverpassResponse> futureOverpassResponse;
   OverpassResponse overpassResponse;
 
   List<Marker> _markers = <Marker>[];
+  Marker _userLocationMarker;
 
   List<String> _filters = <String>[];
   final List<FilterEntry> _filterEntries = <FilterEntry>[
     const FilterEntry("Vegan", Icon(Icons.grass), "diet:vegan"),
-    const FilterEntry("Vegetarian", Icon(Icons.eco), "diet:vegetarian)"),
+    const FilterEntry("Vegetarian", Icon(Icons.eco), "diet:vegetarian"),
     const FilterEntry("Zero waste", Icon(Icons.public), "zero_waste"),
     const FilterEntry("Refills", Icon(Icons.backpack), "bulk_purchase"),
     const FilterEntry("Organic", Icon(Icons.emoji_nature), "organic"),
@@ -84,7 +87,7 @@ out tags qt center;
     }).catchError((error) => print(error));
   }
 
-  Marker createMarker(double lat, double lon, Tags tags) {
+  Marker createMarker(double lat, double lon, Tags tags, Details details) {
     return Marker(
       point: new LatLng(lat, lon),
       anchorPos: AnchorPos.align(AnchorAlign.top),
@@ -94,11 +97,6 @@ out tags qt center;
             showModalBottomSheet(
               context: ctx,
               builder: (BuildContext bc) {
-                String addressString = "";
-                addressString += (tags.addrHousenumber ?? "?") + ", ";
-                addressString += (tags.addrStreet ?? "?") + ", ";
-                addressString += tags.addrPostcode ?? "?";
-
                 return Container(
                     child: new Wrap(children: <Widget>[
                   Card(
@@ -107,13 +105,18 @@ out tags qt center;
                       children: <Widget>[
                         ListTile(
                           leading: Icon(Icons.domain),
-                          title: Text(tags.name),
-                          subtitle: Text(addressString),
+                          title: Text(tags.name ?? "?"),
+                          subtitle: Text(details.completeAddress),
                         ),
                         ListTile(
-                          leading: Icon(Icons.airline_seat_flat_angled),
-                          title: Text("type of establishment"),
-                          subtitle: Text("hello there"),
+                          leading: details.displayType.icon,
+                          title: details.displayType.title,
+                          subtitle: details.displayType.cuisine,
+                        ),
+                        ListTile(
+                          leading: details.benefitType.icon,
+                          title: details.benefitType.title,
+                          subtitle: details.benefitType.subtitle,
                         ),
                       ],
                     ),
@@ -145,14 +148,14 @@ out tags qt center;
 //  }
 
   void handleResponse() {
-    if (overpassResponse == null){
+    if (overpassResponse == null) {
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text("Please load data before attempting to filter it"),
         duration: Duration(seconds: 2),
       ));
       return;
     }
-    if (overpassResponse.elements.isEmpty){
+    if (overpassResponse.elements.isEmpty) {
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text("This area has no data, but you can expand your search"),
         duration: Duration(seconds: 2),
@@ -163,11 +166,15 @@ out tags qt center;
     List<OsmElement> filteredElements =
         overpassResponse.filterElements(_filters);
 
-    if (filteredElements.isEmpty){
+    if (filteredElements.isEmpty) {
       Scaffold.of(context).showSnackBar(SnackBar(
         content: Text("None match this filter"),
         duration: Duration(seconds: 2),
       ));
+      setState(() {
+        _markers.clear();
+        markers.clear();
+      });
       return;
     }
 
@@ -178,12 +185,13 @@ out tags qt center;
       filteredElements.forEach((element) {
         //if (!_markers.contains(PoI)) { // would be better but idc
 
-        _markers.add(createMarker(element.lat, element.lon, element.tags));
+        _markers.add(createMarker(
+            element.lat, element.lon, element.tags, element.details));
 
         //}
-        _markers = List.from(_markers);
-        markers = List.from(_markers);
       });
+      _markers = List.from(_markers);
+      markers = List.from(_markers);
     });
   }
 
@@ -200,9 +208,10 @@ out tags qt center;
               if (value) {
                 _filters.add(_filter.string);
               } else {
-                _filters.removeWhere((String string) {
-                  return string == _filter.string;
-                });
+//                _filters.removeWhere((String string) {
+//                  return string == _filter.string;
+//                });
+                _filters.remove(_filter.string);
               }
               handleResponse();
             });
@@ -218,7 +227,7 @@ out tags qt center;
         .then((Position _currentPosition) {
       if (_currentPosition != null) {
         setState(() {
-          currentPosition =
+          _currentUserPosition =
               LatLng(_currentPosition.latitude, _currentPosition.longitude);
         });
       }
@@ -231,13 +240,30 @@ out tags qt center;
   Widget build(BuildContext context) {
     LatLng _currentPosition;
 
-    if (currentPosition != null && firstBuild == true) {
-      firstBuild = false;
-      _currentPosition =
-          LatLng(currentPosition.latitude, currentPosition.longitude);
-      _mapController.move(_currentPosition, _mapController.zoom);
+    if (_currentUserPosition != null) {
+      if (firstBuild == true) {
+        firstBuild = false;
+        _currentPosition = LatLng(
+            _currentUserPosition.latitude, _currentUserPosition.longitude);
+        _mapController.move(_currentPosition, _mapController.zoom);
+      }
     } else {
       _currentPosition = LatLng(0, 0);
+    }
+
+    if (_currentPosition != null) {
+      _userLocationMarker = Marker(
+        anchorPos: AnchorPos.align(AnchorAlign.center),
+        point: _currentPosition,
+        builder: (ctx) => Container(
+          child: new Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            //size: 36.0,
+          ),
+        ),
+      );
+      userLocationMarker = _userLocationMarker;
     }
 
     return Scaffold(
@@ -252,40 +278,32 @@ out tags qt center;
                   mapController:
                       _mapController != null ? _mapController : mapController,
                   options: new MapOptions(
-                    center: savedPosition != null
-                        ? savedPosition
+                    center: savedMapPosition != null
+                        ? savedMapPosition
                         : _currentPosition,
-                    onPositionChanged: (mapPosition, boolValue) {
-                      savedPosition = mapPosition.center;
-                      savedZoom = mapPosition.zoom;
-                    },
-                    zoom: savedZoom != null ? savedZoom : 13.0,
-                    maxZoom: 19,
+                    zoom: savedMapZoom != null ? savedMapZoom : 13.0,
                     minZoom: 0,
+                    maxZoom: 19,
                     plugins: [
                       MarkerClusterPlugin(),
                     ],
+                    onPositionChanged: (mapPosition, boolValue) {
+                      savedMapPosition = mapPosition.center;
+                      savedMapZoom = mapPosition.zoom;
+                    },
                   ),
                   layers: [
                     new TileLayerOptions(
                         // tileProvider: NetworkTileProvider(), // needed to make map load on desktop
-                        maxZoom: 19,
                         minZoom: 0,
+                        maxZoom: 19,
                         urlTemplate:
                             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                         subdomains: ['a', 'b', 'c']),
                     new MarkerLayerOptions(markers: <Marker>[
-                      Marker(
-                        anchorPos: AnchorPos.align(AnchorAlign.center),
-                        point: _currentPosition,
-                        builder: (ctx) => Container(
-                          child: new Icon(
-                            Icons.my_location,
-                            color: Colors.blue,
-                            size: 36.0,
-                          ),
-                        ),
-                      )
+                      userLocationMarker != null
+                          ? userLocationMarker
+                          : _userLocationMarker
                     ]),
                     MarkerClusterLayerOptions(
                       maxClusterRadius: 120,
