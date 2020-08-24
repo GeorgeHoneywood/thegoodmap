@@ -28,10 +28,14 @@ class _MapPageState extends State<MapPage> {
 
   MapController _mapController;
   LatLng currentPosition;
+  LatLng clickedPosition;
 
   Future<Map> futurePoI;
   List<Marker> _markers = <Marker>[];
   List _unfilteredPoIs = [];
+
+  String title;
+  String text = "No Value Entered";
 
   List<String> _filters = <String>[];
   final List<FilterEntry> _filterEntries = <FilterEntry>[
@@ -45,6 +49,8 @@ class _MapPageState extends State<MapPage> {
   //Position _currentPosition;
   var changesetId;
   bool addClicked = false;
+  bool addName = false;
+  bool nameAdded = false;
 
   @override
   void initState() {
@@ -226,22 +232,18 @@ out tags qt center;
   }
 
   Future<String> _uploadNode(LatLng latlng) async {
-
-
-
     final response = await http.put(
         "https://master.apis.dev.openstreetmap.org/api/0.6/node/create",
         headers: {
           "authorization": 'Basic ' +
-              base64Encode(
-                  utf8.encode("thegoodmap:TCbg93UZ9zeAiM6")),
+              base64Encode(utf8.encode("thegoodmap:TCbg93UZ9zeAiM6")),
           "content-type": "text/xml",
         },
         body: """
 <osm>
  <node changeset="$changesetId" lat="${latlng.latitude}" lon="${latlng.longitude}">
    <tag k="amenity" v="restaurant"/>
-   <tag k="name" v="Bims Big Restaurant"/>
+   <tag k="name" v="$title"/>
    <tag k="diet:vegan" v="yes"/>
    <tag k="diet:vegetarian" v="yes"/>
    <tag k="zero_waste" v="no"/>
@@ -250,19 +252,44 @@ out tags qt center;
    <tag k="second_hand" v="no"/>_
  </node>
 </osm>
-    """ );
+    """);
     return response.body;
   }
 
-  _handletap(LatLng latlng){
-    if (addClicked == false){
+  _handletap(LatLng _clickedPosition) {
+    if (addClicked == false) {
       return;
     }
 
-    var futureUploadNode = _uploadNode(latlng);
+    clickedPosition = _clickedPosition;
+    setState(() {
+      addName = true;
+    });
+  }
+
+  _uploadPlace() {
+    var futureUploadNode = _uploadNode(clickedPosition);
     futureUploadNode.then((value) {
       print(value);
     });
+    setState(() {
+      addName = false;
+    });
+
+  }
+
+  Widget _buildChild() {
+    if (addName == true) {
+      return TextField(
+        decoration: InputDecoration(
+            hintText: 'Name of business', icon: Icon(Icons.edit)),
+        onChanged: (value) => title = value,
+        onSubmitted: (value) {
+          _uploadPlace();
+        },
+      );
+    }
+    return null;
   }
 
   @override
@@ -283,6 +310,10 @@ out tags qt center;
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(15),
+                child: Container(child: _buildChild()),
+              ),
               Flexible(
                   child: Stack(children: [
                 FlutterMap(
