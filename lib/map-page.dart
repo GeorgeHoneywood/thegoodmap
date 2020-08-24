@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -9,12 +8,15 @@ import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
 
-//import 'core/overpass-response.dart';
+import 'core/overpass-response.dart';
 
 List<Marker> markers = [];
-LatLng savedPosition;
-double savedZoom;
+Marker userLocationMarker;
+LatLng savedMapPosition;
+LatLng savedUserPosition;
+double savedMapZoom;
 MapController mapController;
+bool firstBuild = true;
 
 class MapPage extends StatefulWidget {
   MapPage({Key key}) : super(key: key);
@@ -27,20 +29,25 @@ class _MapPageState extends State<MapPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   MapController _mapController;
+
   LatLng currentPosition;
   LatLng clickedPosition;
 
-  Future<Map> futurePoI;
+  LatLng _currentUserPosition;
+
+  Future<OverpassResponse> futureOverpassResponse;
+  OverpassResponse overpassResponse;
+
   List<Marker> _markers = <Marker>[];
-  List _unfilteredPoIs = [];
+  Marker _userLocationMarker;
 
   String title;
   String text = "No Value Entered";
 
   List<String> _filters = <String>[];
   final List<FilterEntry> _filterEntries = <FilterEntry>[
-    const FilterEntry(
-        "Eating out", Icon(Icons.restaurant), "diet:(vegan|vegetarian)"),
+    const FilterEntry("Vegan", Icon(Icons.grass), "diet:vegan"),
+    const FilterEntry("Vegetarian", Icon(Icons.eco), "diet:vegetarian"),
     const FilterEntry("Zero waste", Icon(Icons.public), "zero_waste"),
     const FilterEntry("Refills", Icon(Icons.backpack), "bulk_purchase"),
     const FilterEntry("Organic", Icon(Icons.emoji_nature), "organic"),
@@ -59,7 +66,7 @@ class _MapPageState extends State<MapPage> {
     super.initState();
   }
 
-  Future<Map> fetchPoI() async {
+  Future<OverpassResponse> loadFutureResponse() async {
     const api_url = "https://overpass-api.de/api/interpreter";
 
     final bounds = _mapController.bounds;
@@ -78,21 +85,38 @@ out tags qt center;
         body: {"data": queryString}, encoding: Utf8Codec());
 
     if (response.statusCode == 200) {
-      return json.decode(utf8.decode(response.body.runes.toList()));
+      return OverpassResponse.fromJson(
+          json.decode(utf8.decode(response.body.runes.toList())));
     } else {
       throw Exception('Failed to load PoI');
     }
   }
 
-  void loadPoI() {
-    futurePoI = fetchPoI();
-    futurePoI.then((PoIs) {
-      _unfilteredPoIs = PoIs["elements"];
-      handlePoI();
-    }).catchError((error) => handleError(error));
+  void loadResponse() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+          elevation: 0.0,
+          backgroundColor: Colors.transparent,
+          children: <Widget>[
+            Center(
+              child: CircularProgressIndicator(),
+            )
+          ],
+        );
+      },
+    );
+    futureOverpassResponse = loadFutureResponse();
+    futureOverpassResponse.then((_overpassResponse) {
+      overpassResponse = _overpassResponse;
+      handleResponse();
+      Navigator.pop(context);
+    }).catchError((error) => print(error));
   }
 
-  Marker createMarker(double lat, double lon, Map<String, dynamic> tags) {
+  Marker createMarker(double lat, double lon, Tags tags, Details details) {
     return Marker(
       point: new LatLng(lat, lon),
       anchorPos: AnchorPos.align(AnchorAlign.top),
@@ -102,17 +126,6 @@ out tags qt center;
             showModalBottomSheet(
               context: ctx,
               builder: (BuildContext bc) {
-                String addressString = "";
-                tags["addr:housenumber"] != null
-                    ? addressString += tags["addr:housenumber"] + ", "
-                    : addressString += "?" + ", ";
-                tags["addr:street"] != null
-                    ? addressString += tags["addr:street"] + ", "
-                    : addressString += "?" + ", ";
-                tags["addr:postcode"] != null
-                    ? addressString += tags["addr:postcode"]
-                    : addressString += "?";
-
                 return Container(
                     child: new Wrap(children: <Widget>[
                   Card(
@@ -121,13 +134,18 @@ out tags qt center;
                       children: <Widget>[
                         ListTile(
                           leading: Icon(Icons.domain),
-                          title: Text(tags["name"]),
-                          subtitle: Text(addressString),
+                          title: Text(tags.name ?? "?"),
+                          subtitle: Text(details.completeAddress),
                         ),
                         ListTile(
-                          leading: Icon(Icons.airline_seat_flat_angled),
-                          title: Text("type of establishment"),
-                          subtitle: Text("hello there"),
+                          leading: details.displayType.icon,
+                          title: details.displayType.title,
+                          subtitle: details.displayType.cuisine,
+                        ),
+                        ListTile(
+                          leading: details.benefitType.icon,
+                          title: details.benefitType.title,
+                          subtitle: details.benefitType.subtitle,
                         ),
                       ],
                     ),
@@ -146,49 +164,48 @@ out tags qt center;
     );
   }
 
-  List filterPoIs(List unfilteredPoIs) {
-    List filteredPoIs = new List();
+  void handleResponse() {
+    if (overpassResponse == null) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("Please load data before attempting to filter it"),
+        duration: Duration(seconds: 2),
+      ));
+      return;
+    }
+    if (overpassResponse.elements.isEmpty) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("This area has no data, but you can expand your search"),
+        duration: Duration(seconds: 2),
+      ));
+      return;
+    }
 
-//    PoIs.forEach((PoI) {
-//      if (PoI["tags"].containsKey("diet:vegan")) {
-//        filteredPoIs.add(PoI);
-//      }
-//    });
+    List<OsmElement> filteredElements =
+        overpassResponse.filterElements(_filters);
 
-    RegExp re = new RegExp(_filters.join("|"));
-
-    filteredPoIs = unfilteredPoIs
-        .where((PoI) => re.hasMatch(PoI["tags"].keys.join(" ")))
-        .toList();
-
-    return filteredPoIs;
-  }
-
-  void handlePoI() {
-    List filteredPoIs = filterPoIs(_unfilteredPoIs);
+    if (filteredElements.isEmpty) {
+      Scaffold.of(context).showSnackBar(SnackBar(
+        content: Text("None match this filter"),
+        duration: Duration(seconds: 2),
+      ));
+      setState(() {
+        _markers.clear();
+        markers.clear();
+      });
+      return;
+    }
 
     setState(() {
       _markers.clear();
       markers.clear();
 
-      filteredPoIs.forEach((PoI) {
-        //if (!_markers.contains(PoI)) { // would be better but idc
-
-        if (PoI["type"] == "node") {
-          _markers.add(createMarker(PoI["lat"], PoI["lon"], PoI["tags"]));
-        } else {
-          _markers.add(createMarker(
-              PoI["center"]["lat"], PoI["center"]["lon"], PoI["tags"]));
-        }
-        //}
-        _markers = List.from(_markers);
-        markers = List.from(_markers);
+      filteredElements.forEach((element) {
+        _markers.add(createMarker(
+            element.lat, element.lon, element.tags, element.details));
       });
+      _markers = List.from(_markers);
+      markers = List.from(_markers);
     });
-  }
-
-  void handleError(error) {
-    print(error);
   }
 
   Iterable<Widget> get filterWidgets sync* {
@@ -204,11 +221,9 @@ out tags qt center;
               if (value) {
                 _filters.add(_filter.string);
               } else {
-                _filters.removeWhere((String string) {
-                  return string == _filter.string;
-                });
+                _filters.remove(_filter.string);
               }
-              handlePoI();
+              handleResponse();
             });
           },
         ),
@@ -222,7 +237,7 @@ out tags qt center;
         .then((Position _currentPosition) {
       if (_currentPosition != null) {
         setState(() {
-          currentPosition =
+          _currentUserPosition =
               LatLng(_currentPosition.latitude, _currentPosition.longitude);
         });
       }
@@ -256,7 +271,7 @@ out tags qt center;
     return response.body;
   }
 
-  _handletap(LatLng _clickedPosition) {
+  _handleTap(LatLng _clickedPosition) {
     if (addClicked == false) {
       return;
     }
@@ -275,33 +290,54 @@ out tags qt center;
     setState(() {
       addName = false;
     });
-
   }
 
   Widget _buildChild() {
     if (addName == true) {
-      return TextField(
-        decoration: InputDecoration(
-            hintText: 'Name of business', icon: Icon(Icons.edit)),
-        onChanged: (value) => title = value,
-        onSubmitted: (value) {
-          _uploadPlace();
-        },
+      return Padding(
+        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+        child: TextField(
+          decoration: InputDecoration(
+              hintText: 'Name of business', icon: Icon(Icons.edit)),
+          onChanged: (value) => title = value,
+          onSubmitted: (value) {
+            _uploadPlace();
+          },
+        ),
       );
+    } else {
+      return null;
     }
-    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     LatLng _currentPosition;
 
-    if (currentPosition != null) {
-      _currentPosition =
-          LatLng(currentPosition.latitude, currentPosition.longitude);
-      _mapController.move(_currentPosition, _mapController.zoom);
+    if (_currentUserPosition != null) {
+      if (firstBuild == true) {
+        firstBuild = false;
+        _currentPosition = LatLng(
+            _currentUserPosition.latitude, _currentUserPosition.longitude);
+        _mapController.move(_currentPosition, _mapController.zoom);
+      }
     } else {
       _currentPosition = LatLng(0, 0);
+    }
+
+    if (_currentPosition != null) {
+      _userLocationMarker = Marker(
+        anchorPos: AnchorPos.align(AnchorAlign.center),
+        point: _currentPosition,
+        builder: (ctx) => Container(
+          child: new Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            //size: 36.0,
+          ),
+        ),
+      );
+      userLocationMarker = _userLocationMarker;
     }
 
     return Scaffold(
@@ -310,51 +346,40 @@ out tags qt center;
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(15),
-                child: Container(child: _buildChild()),
-              ),
+              Container(child: _buildChild()),
               Flexible(
                   child: Stack(children: [
                 FlutterMap(
                   mapController:
                       _mapController != null ? _mapController : mapController,
                   options: new MapOptions(
-                    center: savedPosition != null
-                        ? savedPosition
+                    center: savedMapPosition != null
+                        ? savedMapPosition
                         : _currentPosition,
-                    onPositionChanged: (mapPosition, boolValue) {
-                      savedPosition = mapPosition.center;
-                      savedZoom = mapPosition.zoom;
-                    },
-                    zoom: savedZoom != null ? savedZoom : 13.0,
-                    maxZoom: 19,
+                    zoom: savedMapZoom != null ? savedMapZoom : 13.0,
                     minZoom: 0,
-                    onTap: _handletap,
+                    maxZoom: 19,
+                    onTap: _handleTap,
                     plugins: [
                       MarkerClusterPlugin(),
                     ],
+                    onPositionChanged: (mapPosition, boolValue) {
+                      savedMapPosition = mapPosition.center;
+                      savedMapZoom = mapPosition.zoom;
+                    },
                   ),
                   layers: [
                     new TileLayerOptions(
                         // tileProvider: NetworkTileProvider(), // needed to make map load on desktop
-                        maxZoom: 19,
                         minZoom: 0,
+                        maxZoom: 19,
                         urlTemplate:
                             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
                         subdomains: ['a', 'b', 'c']),
                     new MarkerLayerOptions(markers: <Marker>[
-                      Marker(
-                        anchorPos: AnchorPos.align(AnchorAlign.center),
-                        point: _currentPosition,
-                        builder: (ctx) => Container(
-                          child: new Icon(
-                            Icons.my_location,
-                            color: Colors.blue,
-                            size: 36.0,
-                          ),
-                        ),
-                      )
+                      userLocationMarker != null
+                          ? userLocationMarker
+                          : _userLocationMarker
                     ]),
                     MarkerClusterLayerOptions(
                       maxClusterRadius: 120,
@@ -430,13 +455,13 @@ out tags qt center;
                   },
                   tooltip: 'Add To Map',
                   child: Icon(Icons.add_business, color: Colors.white),
-                  backgroundColor: Colors.lightGreen,
+                  //backgroundColor: Colors.lightGreen,
                   heroTag: null),
               FloatingActionButton(
-                onPressed: loadPoI,
+                onPressed: loadResponse,
                 tooltip: 'Load Points of Interest',
                 child: Icon(Icons.search, color: Colors.white),
-                backgroundColor: Colors.lightGreen,
+                //backgroundColor: Colors.lightGreen,
                 heroTag: null,
               )
             ],

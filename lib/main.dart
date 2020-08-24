@@ -19,6 +19,11 @@ class MyApp extends StatelessWidget {
               headline6: TextStyle(
             color: Colors.white,
           ))),
+      darkTheme: ThemeData(
+        accentColor: Colors.lightGreen,
+        brightness: Brightness.dark,
+        //chipTheme: ChipTheme.of(context).copyWith(shadowColor: Colors.lightGreen),
+      ),
       home: MyHomePage(title: 'The Good Map'),
     );
   }
