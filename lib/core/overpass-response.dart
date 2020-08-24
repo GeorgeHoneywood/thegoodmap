@@ -102,23 +102,26 @@ class Tags {
   String organic;
   String zeroWaste;
   String bulkPurchase;
+  String shop;
 
-  Tags(
-      {this.addrCity,
-      this.addrHousenumber,
-      this.addrPostcode,
-      this.addrStreet,
-      this.amenity,
-      this.cuisine,
-      this.dietGlutenFree,
-      this.dietVegan,
-      this.name,
-      this.openingHours,
-      this.dietVegetarian,
-      this.organic,
-      this.takeaway,
-      this.zeroWaste,
-      this.bulkPurchase});
+  Tags({
+    this.addrCity,
+    this.addrHousenumber,
+    this.addrPostcode,
+    this.addrStreet,
+    this.amenity,
+    this.cuisine,
+    this.dietGlutenFree,
+    this.dietVegan,
+    this.name,
+    this.openingHours,
+    this.dietVegetarian,
+    this.organic,
+    this.takeaway,
+    this.zeroWaste,
+    this.bulkPurchase,
+    this.shop,
+  });
 
   Tags.fromJson(Map<String, dynamic> json) {
     addrCity = json['addr:city'];
@@ -136,6 +139,7 @@ class Tags {
     organic = json['organic'];
     zeroWaste = json['zero_waste'];
     bulkPurchase = json['bulk_purchase'];
+    shop = json['shop'];
   }
 }
 
@@ -163,44 +167,64 @@ class Details {
   }
 
   void buildDisplayType() {
-    String cuisine = tags.cuisine;
-    String amenity = tags.amenity;
+    String type = tags.amenity;
+    String subtitle = tags.cuisine;
 
-    if (cuisine == null) {
-      cuisine = "Cuisine unknown";
-    }
-
-    if (amenity == null) {
-      amenity = "Location type unknown";
-    }
-
-    cuisine = formatList(splitOnSemi(cuisine));
-
-    if (amenity == "pub") {
-      displayType = DisplayType("Pub", cuisine, Icons.local_drink);
-    } else if (amenity == "restaurant") {
-      displayType = DisplayType("Restaurant", cuisine, Icons.restaurant);
-    } else if (amenity == "cafe") {
-      displayType = DisplayType("Cafe", cuisine, Icons.local_cafe);
+    if (type == null) {
+      if (tags.shop != null) {
+        type = tags.shop;
+        subtitle = "Shop";
+      } else {
+        type = "Location type unknown";
+        subtitle = "We don't know what kind of place this is";
+      }
     } else {
-      amenity = formatList(splitOnSemi(amenity));
+      if (subtitle == null) {
+        subtitle = "Cuisine unknown";
+      }
+      subtitle = formatList(splitOnSemi(subtitle));
+    }
 
-      displayType =
-          DisplayType(amenity, cuisine, Icons.place);
+    if (type == "pub") {
+      displayType = DisplayType("Pub", subtitle, Icons.local_drink);
+    } else if (type == "restaurant") {
+      displayType = DisplayType("Restaurant", subtitle, Icons.restaurant);
+    } else if (type == "cafe") {
+      displayType = DisplayType("Café", subtitle, Icons.local_cafe);
+    } else if (type == "market" || type == "marketplace") {
+      displayType = DisplayType("Market", subtitle, Icons.house_siding);
+    } else if (type == "health_food") {
+      displayType = DisplayType("Health food", subtitle, Icons.healing);
+    } else if (type == "supermarket" ||
+        type == "convenience" ||
+        type == "greengrocer") {
+      displayType = DisplayType(
+          formatList(splitOnSemi(type)), subtitle, Icons.shopping_cart);
+    } else {
+      type = formatList(splitOnSemi(type));
+
+      displayType = DisplayType(type, subtitle, Icons.place);
     }
   }
 
-  void buildBenefitType(){
+  void buildBenefitType() {
     if (tags.dietVegan != null) {
-      benefitType = BenefitType("Vegan", "Sells products that are vegan", Icons.grass);
+      benefitType =
+          BenefitType("Vegan", "Sells products that are vegan", Icons.grass);
     } else if (tags.dietVegetarian != null) {
-      benefitType = BenefitType("Vegetarian", "Sells products that are vegetarian", Icons.eco);
+      benefitType = BenefitType(
+          "Vegetarian", "Sells products that are vegetarian", Icons.eco);
     } else if (tags.zeroWaste != null) {
-      benefitType = BenefitType("Zero waste", "Sells eco products", Icons.public);
+      benefitType =
+          BenefitType("Zero waste", "Sells eco products", Icons.public);
     } else if (tags.bulkPurchase != null) {
-      benefitType = BenefitType("Bulk shop", "Sells products without packaging -- you have to bring your own", Icons.backpack);
+      benefitType = BenefitType(
+          "Bulk shop",
+          "Sells products without packaging -- you have to bring your own",
+          Icons.backpack);
     } else if (tags.organic != null) {
-      benefitType = BenefitType("Organic", "Sells products that are organic", Icons.emoji_nature);
+      benefitType = BenefitType(
+          "Organic", "Sells products that are organic", Icons.emoji_nature);
     }
   }
 

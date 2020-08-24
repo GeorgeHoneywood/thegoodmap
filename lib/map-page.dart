@@ -85,10 +85,26 @@ out tags qt center;
   }
 
   void loadResponse() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return SimpleDialog(
+          elevation: 0.0,
+          backgroundColor: Colors.transparent,
+          children: <Widget>[
+            Center(
+              child: CircularProgressIndicator(),
+            )
+          ],
+        );
+      },
+    );
     futureOverpassResponse = loadFutureResponse();
     futureOverpassResponse.then((_overpassResponse) {
       overpassResponse = _overpassResponse;
       handleResponse();
+      Navigator.pop(context);
     }).catchError((error) => print(error));
   }
 
@@ -227,8 +243,7 @@ out tags qt center;
         "https://master.apis.dev.openstreetmap.org/api/0.6/node/create",
         headers: {
           "authorization": 'Basic ' +
-              base64Encode(
-                  utf8.encode("thegoodmap:TCbg93UZ9zeAiM6")),
+              base64Encode(utf8.encode("thegoodmap:TCbg93UZ9zeAiM6")),
           "content-type": "text/xml",
         },
         body: """
@@ -244,12 +259,12 @@ out tags qt center;
    <tag k="second_hand" v="no"/>_
  </node>
 </osm>
-    """ );
+    """);
     return response.body;
   }
 
-  _handletap(LatLng latlng){
-    if (addClicked == false){
+  _handletap(LatLng latlng) {
+    if (addClicked == false) {
       return;
     }
 
@@ -403,13 +418,13 @@ out tags qt center;
                   },
                   tooltip: 'Add To Map',
                   child: Icon(Icons.add_business, color: Colors.white),
-                  backgroundColor: Colors.lightGreen,
+                  //backgroundColor: Colors.lightGreen,
                   heroTag: null),
               FloatingActionButton(
                 onPressed: loadResponse,
                 tooltip: 'Load Points of Interest',
                 child: Icon(Icons.search, color: Colors.white),
-                backgroundColor: Colors.lightGreen,
+                //backgroundColor: Colors.lightGreen,
                 heroTag: null,
               )
             ],
