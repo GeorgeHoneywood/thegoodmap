@@ -12,6 +12,7 @@ import 'core/overpass-response.dart';
 
 List<Marker> markers = [];
 Marker userLocationMarker;
+Marker addLocationMarker;
 LatLng savedMapPosition;
 LatLng savedUserPosition;
 double savedMapZoom;
@@ -32,7 +33,6 @@ class _MapPageState extends State<MapPage> {
 
   LatLng currentPosition;
   LatLng clickedPosition;
-
   LatLng _currentUserPosition;
 
   Future<OverpassResponse> futureOverpassResponse;
@@ -40,9 +40,9 @@ class _MapPageState extends State<MapPage> {
 
   List<Marker> _markers = <Marker>[];
   Marker _userLocationMarker;
+  Marker _addLocationMarker;
 
   String title;
-  String text = "No Value Entered";
 
   List<String> _filters = <String>[];
   final List<FilterEntry> _filterEntries = <FilterEntry>[
@@ -58,6 +58,8 @@ class _MapPageState extends State<MapPage> {
   bool addClicked = false;
   bool addName = false;
   bool nameAdded = false;
+  bool editClicked = false;
+  bool searchClicked = false;
 
   @override
   void initState() {
@@ -68,10 +70,9 @@ class _MapPageState extends State<MapPage> {
 
   Future<OverpassResponse> loadFutureResponse() async {
     const api_url = "https://overpass-api.de/api/interpreter";
-
     final bounds = _mapController.bounds;
-
     final queryString = """
+    
 [out:json][timeout:25][bbox:${bounds.south},${bounds.west},${bounds.north},${bounds.east}];
 (nwr["zero_waste"~"(yes|only|limited)"];
  nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"];
@@ -93,6 +94,10 @@ out tags qt center;
   }
 
   void loadResponse() {
+    searchClicked = true;
+    editClicked = false;
+    addClicked = false;
+    addName = false;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -275,12 +280,12 @@ out tags qt center;
     if (addClicked == false) {
       return;
     }
-
     clickedPosition = _clickedPosition;
     setState(() {
       addName = true;
     });
   }
+
 
   _uploadPlace() {
     var futureUploadNode = _uploadNode(clickedPosition);
@@ -324,6 +329,19 @@ out tags qt center;
     } else {
       _currentPosition = LatLng(0, 0);
     }
+    if (addName == true) {
+      _addLocationMarker = Marker(
+        anchorPos: AnchorPos.align(AnchorAlign.center),
+        point: clickedPosition,
+        builder: (ctx) => Container(
+          child: new Icon(
+            Icons.place,
+            color: Colors.lightGreen,
+            size: 36.0,
+          ),),);
+      addLocationMarker = _addLocationMarker;
+    }
+    if (addName == false) { addLocationMarker = null; }
 
     if (_currentPosition != null) {
       _userLocationMarker = Marker(
@@ -333,7 +351,6 @@ out tags qt center;
           child: new Icon(
             Icons.my_location,
             color: Colors.blue,
-            //size: 36.0,
           ),
         ),
       );
@@ -379,7 +396,8 @@ out tags qt center;
                     new MarkerLayerOptions(markers: <Marker>[
                       userLocationMarker != null
                           ? userLocationMarker
-                          : _userLocationMarker
+                          : _userLocationMarker,
+                      if (addLocationMarker != null) addLocationMarker
                     ]),
                     MarkerClusterLayerOptions(
                       maxClusterRadius: 120,
@@ -424,6 +442,11 @@ out tags qt center;
             children: <Widget>[
               FloatingActionButton(
                   onPressed: () {
+                    setState(() {
+                      editClicked = true;
+                      searchClicked = false;
+                    });
+
                     Future<String> openChangeset() async {
                       final response = await http.put(
                           "https://master.apis.dev.openstreetmap.org/api/0.6/changeset/create",
@@ -455,13 +478,13 @@ out tags qt center;
                   },
                   tooltip: 'Add To Map',
                   child: Icon(Icons.add_business, color: Colors.white),
-                  //backgroundColor: Colors.lightGreen,
+                  backgroundColor: editClicked == false ? Colors.lightGreen : Colors.green,
                   heroTag: null),
               FloatingActionButton(
                 onPressed: loadResponse,
                 tooltip: 'Load Points of Interest',
                 child: Icon(Icons.search, color: Colors.white),
-                //backgroundColor: Colors.lightGreen,
+                backgroundColor: searchClicked == false ? Colors.lightGreen: Colors.green,
                 heroTag: null,
               )
             ],
