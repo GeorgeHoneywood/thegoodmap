@@ -360,6 +360,7 @@ out tags qt center;
     }
 
     return Scaffold(
+        resizeToAvoidBottomInset: false,
         key: _scaffoldKey,
         body: Center(
           child: Column(
@@ -447,6 +448,8 @@ out tags qt center;
                     setState(() {
                       editClicked = true;
                       searchClicked = false;
+                      markers.clear();
+                      _markers.clear();
                     });
 
                     Future<String> openChangeset() async {
