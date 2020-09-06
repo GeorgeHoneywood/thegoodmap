@@ -51,7 +51,12 @@ class OverpassResponse {
           if (element.tags.organic != null) {
             filteredElements.add(element);
           }
+        } else if (filter == "second_hand") {
+          if (element.tags.secondHand != null) {
+            filteredElements.add(element);
+          }
         }
+
       });
     });
 
@@ -102,6 +107,7 @@ class Tags {
   String organic;
   String zeroWaste;
   String bulkPurchase;
+  String secondHand;
   String shop;
 
   Tags({
@@ -120,6 +126,7 @@ class Tags {
     this.takeaway,
     this.zeroWaste,
     this.bulkPurchase,
+    this.secondHand,
     this.shop,
   });
 
@@ -139,6 +146,7 @@ class Tags {
     organic = json['organic'];
     zeroWaste = json['zero_waste'];
     bulkPurchase = json['bulk_purchase'];
+    secondHand = json['second_hand'];
     shop = json['shop'];
   }
 }
@@ -225,6 +233,10 @@ class Details {
     } else if (tags.organic != null) {
       benefitType = BenefitType(
           "Organic", "Sells products that are organic", Icons.emoji_nature);
+    }
+    else if (tags.secondHand != null) {
+      benefitType = BenefitType(
+        "Second hand", "Sells second hand products, means less in landfill", Icons.loyalty);
     }
   }
 

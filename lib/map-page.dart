@@ -51,6 +51,7 @@ class _MapPageState extends State<MapPage> {
     const FilterEntry("Zero waste", Icon(Icons.public), "zero_waste"),
     const FilterEntry("Refills", Icon(Icons.backpack), "bulk_purchase"),
     const FilterEntry("Organic", Icon(Icons.emoji_nature), "organic"),
+    const FilterEntry("Second hand", Icon(Icons.loyalty), "second_hand")
   ];
 
   //Position _currentPosition;
@@ -78,6 +79,7 @@ class _MapPageState extends State<MapPage> {
  nwr[~"diet:(vegan|vegetarian)"~"(yes|limited|only)"];
  nwr["organic"~"(yes|limited|only)"];
  nwr["bulk_purchase"~"(yes|limited|only)"];
+ nwr["second_hand"~"(yes|limited|only)"];
 );
 out tags qt center;
 """;
@@ -299,17 +301,17 @@ out tags qt center;
 
   Widget _buildChild() {
     if (addName == true) {
-      return Padding(
-        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-        child: TextField(
+      //return Padding(
+        //padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+        return TextField(
           decoration: InputDecoration(
               hintText: 'Name of business', icon: Icon(Icons.edit)),
           onChanged: (value) => title = value,
           onSubmitted: (value) {
             _uploadPlace();
           },
-        ),
-      );
+        );
+      //);
     } else {
       return null;
     }
@@ -346,7 +348,7 @@ out tags qt center;
     if (_currentPosition != null) {
       _userLocationMarker = Marker(
         anchorPos: AnchorPos.align(AnchorAlign.center),
-        point: _currentPosition,
+        point: _currentPosition, 
         builder: (ctx) => Container(
           child: new Icon(
             Icons.my_location,
