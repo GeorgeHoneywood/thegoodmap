@@ -14,6 +14,7 @@ The map currently displays a number of different businesses
 * Shops that allow you to refill your own containers
 * Shops that revolve around selling organic food
 * Businesses that attempt to be zero waste
+* Shops that sell second hand goods
 
 #### Giving back
 
