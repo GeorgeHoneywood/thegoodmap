@@ -132,29 +132,39 @@ out tags qt center;
           onTap: () {
             showModalBottomSheet(
               context: ctx,
-              builder: (BuildContext bc) {
+              builder: (BuildContext bc) {                
+                List<ListTile> tiles = [
+                  ListTile(
+                    leading: Icon(Icons.domain),
+                    title: Text(tags.name ?? "?"),
+                    subtitle: Text(details.completeAddress),
+                  ),
+                  ListTile(
+                    leading: details.displayType.icon,
+                    title: details.displayType.title,
+                    subtitle: details.displayType.cuisine,
+                  ),
+                  ListTile(
+                    leading: details.benefitType.icon,
+                    title: details.benefitType.title,
+                    subtitle: details.benefitType.subtitle,
+                  ),
+                ];
+
+                if (tags.openingHours != null) {
+                  tiles.insert(2, ListTile(
+                    leading: Icon(Icons.access_time),
+                    title: Text("Opening hours"),
+                    subtitle: Text(tags.openingHours),
+                  ));
+                }
+
                 return Container(
                     child: new Wrap(children: <Widget>[
                   Card(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        ListTile(
-                          leading: Icon(Icons.domain),
-                          title: Text(tags.name ?? "?"),
-                          subtitle: Text(details.completeAddress),
-                        ),
-                        ListTile(
-                          leading: details.displayType.icon,
-                          title: details.displayType.title,
-                          subtitle: details.displayType.cuisine,
-                        ),
-                        ListTile(
-                          leading: details.benefitType.icon,
-                          title: details.benefitType.title,
-                          subtitle: details.benefitType.subtitle,
-                        ),
-                      ],
+                      children: tiles,
                     ),
                   )
                 ]));
@@ -288,7 +298,6 @@ out tags qt center;
     });
   }
 
-
   _uploadPlace() {
     var futureUploadNode = _uploadNode(clickedPosition);
     futureUploadNode.then((value) {
@@ -302,15 +311,15 @@ out tags qt center;
   Widget _buildChild() {
     if (addName == true) {
       //return Padding(
-        //padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-        return TextField(
-          decoration: InputDecoration(
-              hintText: 'Name of business', icon: Icon(Icons.edit)),
-          onChanged: (value) => title = value,
-          onSubmitted: (value) {
-            _uploadPlace();
-          },
-        );
+      //padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+      return TextField(
+        decoration: InputDecoration(
+            hintText: 'Name of business', icon: Icon(Icons.edit)),
+        onChanged: (value) => title = value,
+        onSubmitted: (value) {
+          _uploadPlace();
+        },
+      );
       //);
     } else {
       return null;
@@ -340,15 +349,19 @@ out tags qt center;
             Icons.place,
             color: Colors.lightGreen,
             size: 36.0,
-          ),),);
+          ),
+        ),
+      );
       addLocationMarker = _addLocationMarker;
     }
-    if (addName == false) { addLocationMarker = null; }
+    if (addName == false) {
+      addLocationMarker = null;
+    }
 
     if (_currentPosition != null) {
       _userLocationMarker = Marker(
         anchorPos: AnchorPos.align(AnchorAlign.center),
-        point: _currentPosition, 
+        point: _currentPosition,
         builder: (ctx) => Container(
           child: new Icon(
             Icons.my_location,
@@ -483,13 +496,15 @@ out tags qt center;
                   },
                   tooltip: 'Add To Map',
                   child: Icon(Icons.add_business, color: Colors.white),
-                  backgroundColor: editClicked == false ? Colors.lightGreen : Colors.green,
+                  backgroundColor:
+                      editClicked == false ? Colors.lightGreen : Colors.green,
                   heroTag: null),
               FloatingActionButton(
                 onPressed: loadResponse,
                 tooltip: 'Load Points of Interest',
                 child: Icon(Icons.search, color: Colors.white),
-                backgroundColor: searchClicked == false ? Colors.lightGreen: Colors.green,
+                backgroundColor:
+                    searchClicked == false ? Colors.lightGreen : Colors.green,
                 heroTag: null,
               )
             ],

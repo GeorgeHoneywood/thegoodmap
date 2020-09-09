@@ -43,18 +43,26 @@ class _TipPageState extends State<TipPage> {
                   Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.schedule),
                     Checkbox(
-                        value: true,
-                        onChanged: (checkState) {
-                          ecoTips[position].doing = checkState;
-                        }),
+                        value: ecoTips[position].doing,
+                        onChanged: !ecoTips[position].done
+                            ? (checkState) {
+                                setState(() {
+                                  ecoTips[position].doing = checkState;
+                                });
+                              }
+                            : null),
                   ]),
                   Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.done),
                     Checkbox(
-                        value: false,
+                        value: ecoTips[position].done,
                         onChanged: (checkState) {
                           setState(() {
                             ecoTips[position].done = checkState;
+
+                            if (checkState) {
+                              ecoTips[position].doing = true;
+                            }
                           });
                         }),
                   ]),
@@ -70,8 +78,8 @@ class _TipPageState extends State<TipPage> {
 
 class EcoTip {
   ListTile tile;
-  bool done;
-  bool doing;
+  bool done = false;
+  bool doing = false;
 
   EcoTip(IconData icon, String title, String subtitle) {
     tile = ListTile(
