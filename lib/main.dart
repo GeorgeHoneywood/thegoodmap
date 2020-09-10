@@ -71,15 +71,13 @@ class _MyHomePageState extends State<MyHomePage> {
             icon: Icon(
               Icons.map,
             ),
-            title: Text('Map'),
+            label: 'Map',
           ),
           BottomNavigationBarItem(
             icon: Icon(
               Icons.thumb_up,
             ),
-            title: Text(
-              'Tips',
-            ),
+            label: 'Tips',
           )
         ],
         currentIndex: _selectedIndex,

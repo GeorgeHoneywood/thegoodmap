@@ -6,7 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong/latlong.dart';
 import 'package:http/http.dart' as http;
-import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart' show LocationAccuracy, Position, GeolocatorPlatform;
 
 import 'core/overpass-response.dart';
 
@@ -249,7 +249,7 @@ out tags qt center;
   }
 
   Future<void> _getCurrentLocation() async {
-    await Geolocator()
+    await GeolocatorPlatform.instance
         .getCurrentPosition(desiredAccuracy: LocationAccuracy.best)
         .then((Position _currentPosition) {
       if (_currentPosition != null) {

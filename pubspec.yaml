@@ -1,4 +1,4 @@
-name: WasteMap
+name: TheGoodMap
 description: An app to help the enviromentally conscious find their way.
 
 # The following line prevents the package from being accidentally published to
@@ -30,6 +30,7 @@ dependencies:
 
   http: any
 
+  shared_preferences: any
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
